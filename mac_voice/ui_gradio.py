@@ -9,6 +9,8 @@ import shutil
 from pathlib import Path
 
 from .dataset import _pcm_stats
+from .catalog import list_voice_packages
+from .synth import run_synth
 
 RECOMMENDED_SENTENCES = [
     "오늘 아침에는 평소보다 조금 일찍 일어났습니다.",
@@ -77,6 +79,17 @@ def register_recording(dataset_root: str | Path, audio_path: str | Path | None, 
     return report + f"\n저장 완료: {destination}"
 
 
+def synthesize_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, output: str) -> str:
+    if not text.strip():
+        return "텍스트를 입력해 주세요."
+    voice_path = Path(voice_root).expanduser() / voice_name
+    try:
+        result = run_synth(voice_path, text.strip(), output, model_dir=model_dir)
+    except (OSError, RuntimeError, ValueError) as exc:
+        return f"합성할 수 없습니다: {exc}"
+    return f"합성 완료: {result}"
+
+
 def build_demo():
     try:
         import gradio as gr
@@ -102,6 +115,17 @@ def build_demo():
         sentence.change(lambda value: value, inputs=sentence, outputs=transcript)
         inspect.click(inspect_recording, inputs=[audio, transcript], outputs=report)
         save.click(register_recording, inputs=[dataset_root, audio, transcript], outputs=save_report)
+        gr.Markdown("## Voice Package TTS")
+        voice_root = gr.Textbox(label="Voice Package 폴더", value="artifacts/voices")
+        voice_choices = [item["path"] for item in list_voice_packages("artifacts/voices")]
+        voice_names = [Path(path).name for path in voice_choices]
+        voice_name = gr.Dropdown(voice_names, value=voice_names[0] if voice_names else None, label="음성 선택")
+        tts_text = gr.Textbox(label="TTS 텍스트")
+        model_dir = gr.Textbox(label="CosyVoice 모델 경로", value="/Users/jawoongku/Models/Fun-CosyVoice3-0.5B")
+        output = gr.Textbox(label="출력 WAV", value="artifacts/ui_tts.wav")
+        synth = gr.Button("음성 생성")
+        synth_report = gr.Textbox(label="TTS 결과", lines=3)
+        synth.click(synthesize_for_ui, inputs=[voice_root, voice_name, tts_text, model_dir, output], outputs=synth_report)
     return demo
 
 

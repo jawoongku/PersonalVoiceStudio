@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, inspect_recording, register_recording
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, inspect_recording, register_recording, synthesize_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -38,3 +38,6 @@ class GradioPrototypeTests(unittest.TestCase):
             self.assertIn("저장 완료", result)
             self.assertTrue((dataset / "raw" / "0001.wav").is_file())
             self.assertIn("저장할 문장입니다.", (dataset / "transcripts.csv").read_text(encoding="utf-8"))
+
+    def test_synthesize_requires_text(self):
+        self.assertIn("텍스트를 입력", synthesize_for_ui("artifacts/voices", "demo", "", "missing", "out.wav"))
