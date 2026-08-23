@@ -1,5 +1,7 @@
 # CosyVoice3 Mac Voice Training
 
+[![CI](https://github.com/jawoongku/PersonalVoiceStudio/actions/workflows/ci.yml/badge.svg)](https://github.com/jawoongku/PersonalVoiceStudio/actions/workflows/ci.yml)
+
 Apple Silicon Mac에서 CosyVoice3 기반 음성 데이터 준비, LoRA 학습, Voice Package 생성을 수행하기 위한 CLI 프로젝트입니다.
 
 현재 구현은 upstream CosyVoice를 수정하지 않고 `/Users/jawoongku/CosyVoice`를 wrapper로 사용합니다. 기본 모델 경로는 `COSYVOICE_MODEL_DIR` 또는 `/Users/jawoongku/Models/Fun-CosyVoice3-0.5B`입니다.
