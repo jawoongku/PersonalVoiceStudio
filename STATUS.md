@@ -149,6 +149,7 @@
 - [x] MPS training device resolution now surfaces the runtime diagnosis and next action instead of a generic failure.
 - [x] Added an isolated, non-destructive MPS candidate environment creator with dry-run mode.
 - [x] Created the isolated `pvs-mps` candidate and tested PyTorch 2.5.1 and 2.7.1; repeated fresh-process probes still report `os-runtime-mismatch`, so the candidate is not accepted as MPS-ready.
+- [x] Tested latest PyTorch 2.13.0/torchaudio 2.11.0 in `pvs-mps`; this Codex execution context still reports `_mps_is_available=False`. A normal Terminal host probe remains required because PyTorch reports different MPS behavior inside Codex on the same host.
 - [x] Exposed MPS readiness, tensor probe, and action guidance through `bridge-status` and the SwiftUI shell; 67 tests pass.
 - [x] Locate/provision the core `Fun-CosyVoice3-0.5B` model assets without duplicating an existing copy.
 - [ ] Implement and verify baseline MPS inference.

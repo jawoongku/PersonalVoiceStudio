@@ -59,6 +59,14 @@ conda run -n cosyvoice python -m mac_voice mps-doctor --json
 
 기존 환경을 변경하지 않고 후보 환경을 만들려면 다음 명령을 사용합니다. 기본값은 별도 `pvs-mps` 환경과 PyTorch 2.5.1이며, 실제 생성 전에는 dry-run으로 명령만 출력합니다. 현재 이 Mac에서는 PyTorch 2.5.1과 2.7.1 모두 새 프로세스의 tensor probe를 통과하지 못했으므로 아직 MPS 지원 환경으로 확정하지 않았습니다.
 
+최신 2.13.0도 Codex 실행 컨텍스트에서는 동일하게 실패했습니다. 일반 macOS Terminal에서 다음을 실행해 호스트 런타임을 최종 확인해야 합니다.
+
+```bash
+cd /Users/jawoongku/workspace/tts
+PYTHONPATH="$PWD" conda run -n pvs-mps python -m mac_voice mps-doctor
+PYTHONPATH="$PWD" conda run -n pvs-mps python -m mac_voice mps-smoke
+```
+
 ```bash
 make create-mps-env
 PVS_MPS_TORCH_VERSION=2.5.1 scripts/create_mps_env.sh
