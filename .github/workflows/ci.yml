@@ -24,3 +24,7 @@ jobs:
       - name: Build SwiftUI shell
         run: swift build -c release
         working-directory: mac_app
+      - name: Build and check app bundle
+        run: |
+          scripts/build_macos_app.sh
+          scripts/check_app_bundle.sh
