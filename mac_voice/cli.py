@@ -21,7 +21,7 @@ from .narrate import run_narrate
 from .parquet import validate_data_list
 from .mps_smoke import run_mps_smoke
 from .mps_baseline import run_mps_baseline
-from .mps_training import run_user_parquet_mps_backward
+from .mps_training import run_user_parquet_mps_backward, run_user_parquet_mps_train
 from .mps_runtime import probe as probe_mps_runtime, render as render_mps_runtime
 from .ui_gradio import launch_ui
 from .project import initialize_project
@@ -172,6 +172,12 @@ def build_parser() -> argparse.ArgumentParser:
     mps_parquet.add_argument("--data-list", required=True)
     mps_parquet.add_argument("--model-dir", required=True)
     mps_parquet.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    mps_train = subparsers.add_parser("mps-parquet-train", help="run one full user parquet epoch on MPS")
+    mps_train.add_argument("--train-data-list", required=True)
+    mps_train.add_argument("--dev-data-list", required=True)
+    mps_train.add_argument("--model-dir", required=True)
+    mps_train.add_argument("--output", required=True)
+    mps_train.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
     mps_doctor = subparsers.add_parser("mps-doctor", help="diagnose MPS runtime compatibility without changing the environment")
     mps_doctor.add_argument("--json", action="store_true", dest="as_json")
     inspect_model = subparsers.add_parser("inspect-model", help="inspect runtime LoRA target modules")
@@ -380,6 +386,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "mps-parquet-backward":
         try:
             result = run_user_parquet_mps_backward(args.data_list, args.model_dir, args.upstream_root)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(json.dumps(result, ensure_ascii=False))
+        return 0
+    if args.command == "mps-parquet-train":
+        try:
+            result = run_user_parquet_mps_train(args.train_data_list, args.dev_data_list, args.model_dir, args.output, args.upstream_root)
         except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
             print(f"[ERROR] {exc}")
             return 1
