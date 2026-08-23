@@ -180,13 +180,13 @@
 - [x] Wire model-specific feature extraction to a pinned/available CosyVoice checkout.
 - [x] Run feature extraction against real model assets and verify generated tensors/parquet (temporary fixture; user voice not tested).
 - [x] Connect package builder to the real MPS-trained adapter and reference audio; `my_voice_mps_epoch` validated.
-- [ ] Apply LoRA helpers to the actual CosyVoice3 model and verify target modules.
-- [ ] Run the trainer on real MPS with a real CosyVoice batch.
-- [ ] Connect the validated train entrypoint to the actual CosyVoice3 model loader.
-- [ ] Integrate metrics/resume utilities into the full CosyVoice3 trainer loop.
+- [x] Apply LoRA helpers to the actual CosyVoice3 model and verify target modules (96 runtime matches).
+- [x] Run the trainer on real MPS with real CosyVoice user parquet batches (8-row epoch).
+- [x] Connect the validated MPS train entrypoint to the actual CosyVoice3 model loader.
+- [x] Integrate metrics/checkpoint/resume utilities into the MPS CosyVoice3 training path.
 - [ ] Connect the generic loop to real CosyVoice3 parquet batches and MPS device.
-- [ ] Validate real generated parquet schema and feature columns.
-- [ ] Install/provide an MPS-capable runtime and local model assets.
+- [x] Validate real generated parquet schema and feature columns.
+- [x] Install/provide an MPS-capable runtime and local model assets; host probe passes on `pvs-mps`.
 - [x] Verify `compare` with real MPS-trained adapter output; CAMPPlus similarity `0.919853` recorded.
 
 ## Blocked
