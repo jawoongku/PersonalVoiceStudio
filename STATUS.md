@@ -79,6 +79,7 @@
 - [x] Added job state transition validation to prevent terminal jobs from restarting; 53 tests pass.
 - [x] Added `parquet-train-job`, connecting real CPU parquet smoke training to queued/running/completed/failed job states.
 - [x] Ran the job command on the real user parquet for 1 CPU step: train_loss=3.892549, dev_loss=3.897105; fixed job step reporting (`steps` fallback).
+- [x] Added and ran `parquet-resume-job` on the generated adapter/state, confirming a fresh-model resume step completes.
 
 ## In progress
 
