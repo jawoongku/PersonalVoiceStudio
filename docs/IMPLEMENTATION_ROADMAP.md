@@ -51,6 +51,7 @@
 - [x] TTS 생성 히스토리 기록·조회 (`artifacts/tts_history.jsonl`)
 - [x] 오디오 재생·저장·히스토리
 - [x] SwiftUI 녹음 WAV 재생 컨트롤
+- [x] SwiftUI Voice Package TTS 요청·생성 WAV 재생 연결
 
 ## Phase 4 — macOS 제품화
 

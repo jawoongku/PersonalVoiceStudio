@@ -3,6 +3,8 @@ import SwiftUI
 struct ContentView: View {
     @State private var snapshot: BridgeSnapshot?
     @State private var errorMessage: String?
+    @State private var ttsText = ""
+    @State private var ttsOutput: URL?
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
     let projectDirectory: String
@@ -42,6 +44,18 @@ struct ContentView: View {
                     if audioPlayer.isPlaying { audioPlayer.stop() }
                     else { do { try audioPlayer.play(url: output) } catch { errorMessage = "재생 오류: \(error.localizedDescription)" } }
                 }
+            }
+            TextField("TTS 텍스트", text: $ttsText)
+            Button("Voice Package TTS 생성") {
+                guard let voice = snapshot?.voices.first(where: { $0.valid }) else { errorMessage = "사용 가능한 Voice Package가 없습니다."; return }
+                let output = URL(fileURLWithPath: projectDirectory).appendingPathComponent("artifacts/swiftui_tts.wav")
+                do {
+                    try BridgeClient.synthesize(voice: voice.path, text: ttsText, output: output.path, modelDirectory: ProcessInfo.processInfo.environment["PVS_MODEL_DIR"] ?? "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B", workingDirectory: projectDirectory)
+                    ttsOutput = output
+                } catch { errorMessage = "TTS 오류: \(error.localizedDescription)" }
+            }
+            if let ttsOutput {
+                Button("생성 음성 재생") { do { try audioPlayer.play(url: ttsOutput) } catch { errorMessage = "재생 오류: \(error.localizedDescription)" } }
             }
         }
         .padding()

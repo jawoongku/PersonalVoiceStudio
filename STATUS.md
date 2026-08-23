@@ -121,6 +121,7 @@
 - [x] Similarity CLI now accepts JSON embedding files as well as inline vectors.
 - [x] Marked the product specification-to-code-structure milestone complete for the implemented MVP layers.
 - [x] Added AVAudioPlayer playback controls for the latest SwiftUI recording.
+- [x] Connected SwiftUI text input to the Python `synth` CLI and generated-WAV playback; release build passes.
 
 ## In progress
 
