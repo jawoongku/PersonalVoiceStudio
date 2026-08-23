@@ -55,7 +55,7 @@
 
 - [ ] SwiftUI shell
 - [ ] AVAudioEngine 녹음
-- [ ] Python engine subprocess/API bridge
+- [x] Python engine subprocess/API bridge (job/bridge-status 기반)
 - [ ] microphone/filesystem 권한
 - [ ] `.app` 패키징
 

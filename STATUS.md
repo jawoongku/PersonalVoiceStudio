@@ -97,6 +97,7 @@
 - [x] Added `list-voices --json` for machine-readable Voice Package catalogs.
 - [x] Added read-only Python bridge primitives for job snapshots and Voice Package catalogs; 59 tests pass.
 - [x] Added `bridge-status` CLI for one-call combined job/catalog JSON snapshots.
+- [x] Updated roadmap to reflect the implemented Python subprocess/JSON bridge; SwiftUI shell remains separate.
 
 ## In progress
 
