@@ -107,6 +107,7 @@
 - [x] Added and ran `scripts/build_macos_app.sh` to create a release `.app` bundle; signing/notarization remains pending.
 - [x] Added bundle identifier/version metadata and optional `SIGNING_IDENTITY` codesign path; notarization remains pending.
 - [x] Added guarded `scripts/notarize_macos_app.sh`; execution requires a configured Apple notarytool profile.
+- [x] Added GitHub Actions CI for Python unit tests and macOS Swift release build.
 
 ## In progress
 
