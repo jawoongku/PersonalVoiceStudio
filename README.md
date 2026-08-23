@@ -143,6 +143,13 @@ python -m mac_voice list-voices --root artifacts/voices
 python -m mac_voice retention-plan --root artifacts/runs --keep 3
 python -m mac_voice retention-plan --root artifacts/runs --keep 3 --json
 ```
+
+보관 artifact의 무결성 manifest를 생성·검증할 수 있습니다.
+
+```bash
+python -m mac_voice artifact-manifest --root artifacts/voices/my_voice_mps_epoch
+python -m mac_voice artifact-verify --manifest artifacts/voices/my_voice_mps_epoch/artifact-manifest.json
+```
 자동화에서는 `python -m mac_voice list-voices --root artifacts/voices --json`을 사용할 수 있습니다.
 SwiftUI 브리지는 `python -m mac_voice bridge-status --job <job.json> --voices artifacts/voices`로 통합 상태를 읽을 수 있습니다.
 임베딩 벡터 비교는 `python -m mac_voice similarity --left 1,2 --right 1,2`로 실행할 수 있습니다.

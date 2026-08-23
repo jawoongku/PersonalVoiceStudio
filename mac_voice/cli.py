@@ -31,6 +31,7 @@ from .bridge import job_snapshot, mps_snapshot, run_catalog, voice_catalog
 from .similarity import cosine_similarity, evaluate_audio_similarity
 from .runs import list_runs
 from .retention import retention_plan
+from .artifacts import create_manifest, verify_manifest
 from .jobs import create_job, update_job
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
 
@@ -68,6 +69,11 @@ def build_parser() -> argparse.ArgumentParser:
     retention.add_argument("--root", default="artifacts/runs")
     retention.add_argument("--keep", type=int, default=3)
     retention.add_argument("--json", action="store_true", dest="as_json")
+    manifest = subparsers.add_parser("artifact-manifest", help="create a SHA-256 manifest for a run or Voice Package")
+    manifest.add_argument("--root", required=True)
+    manifest.add_argument("--output", default=None)
+    artifact_verify = subparsers.add_parser("artifact-verify", help="verify a SHA-256 artifact manifest")
+    artifact_verify.add_argument("--manifest", required=True)
     job_create = subparsers.add_parser("job-create", help="create a queued training job metadata file")
     job_create.add_argument("--output", required=True, help="job output directory")
     job_create.add_argument("--command", dest="job_command", default="train")
@@ -333,6 +339,25 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[CANDIDATE] {len(plan['candidates'])} run(s); no files were deleted")
             for path in plan["candidates"]:
                 print(f"  {path}")
+        return 0
+    if args.command == "artifact-manifest":
+        try:
+            print(f"[OK] manifest: {create_manifest(args.root, args.output)}")
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        return 0
+    if args.command == "artifact-verify":
+        try:
+            errors = verify_manifest(args.manifest)
+        except (OSError, ValueError, json.JSONDecodeError, KeyError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        if errors:
+            for error in errors:
+                print(f"[ERROR] {error}")
+            return 1
+        print("[OK] artifact manifest verified")
         return 0
     if args.command == "job-create":
         try:
