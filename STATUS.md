@@ -95,6 +95,7 @@
 - [x] Added dataset-aware next-sentence recommendation to the recording UI; 57 tests pass.
 - [x] Comparison reports now explicitly distinguish audio statistics from unavailable speaker-similarity scoring.
 - [x] Added `list-voices --json` for machine-readable Voice Package catalogs.
+- [x] Added read-only Python bridge primitives for job snapshots and Voice Package catalogs; 59 tests pass.
 
 ## In progress
 
