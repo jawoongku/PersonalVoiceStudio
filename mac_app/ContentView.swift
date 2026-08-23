@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var ttsText = ""
     @State private var ttsOutput: URL?
     @State private var isSynthesizing = false
+    @State private var selectedVoicePath: String?
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
     let projectDirectory: String
@@ -19,6 +20,11 @@ struct ContentView: View {
             if let snapshot {
                 Text("작업 상태: \(snapshot.job.status)")
                 Text("Voice Package: \(snapshot.voices.filter(\.valid).count)개 사용 가능")
+                Picker("TTS Voice", selection: $selectedVoicePath) {
+                    ForEach(snapshot.voices.filter(\.valid)) { voice in
+                        Text(voice.name).tag(Optional(voice.path))
+                    }
+                }
                 List(snapshot.voices) { voice in
                     HStack { Text(voice.name); Spacer(); Text(voice.valid ? "사용 가능" : "오류") }
                 }
@@ -60,13 +66,13 @@ struct ContentView: View {
             }
             TextField("TTS 텍스트", text: $ttsText)
             Button(isSynthesizing ? "TTS 생성 중..." : "Voice Package TTS 생성") {
-                guard let voice = snapshot?.voices.first(where: { $0.valid }) else { errorMessage = "사용 가능한 Voice Package가 없습니다."; return }
+                guard let voicePath = selectedVoicePath ?? snapshot?.voices.first(where: { $0.valid })?.path else { errorMessage = "사용 가능한 Voice Package가 없습니다."; return }
                 let output = URL(fileURLWithPath: projectDirectory).appendingPathComponent("artifacts/swiftui_tts.wav")
                 isSynthesizing = true
                 let modelDirectory = ProcessInfo.processInfo.environment["PVS_MODEL_DIR"] ?? "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
                 DispatchQueue.global(qos: .userInitiated).async {
                     do {
-                        try BridgeClient.synthesize(voice: voice.path, text: ttsText, output: output.path, modelDirectory: modelDirectory, workingDirectory: projectDirectory)
+                        try BridgeClient.synthesize(voice: voicePath, text: ttsText, output: output.path, modelDirectory: modelDirectory, workingDirectory: projectDirectory)
                         DispatchQueue.main.async { ttsOutput = output; isSynthesizing = false }
                     } catch {
                         DispatchQueue.main.async { errorMessage = "TTS 오류: \(error.localizedDescription)"; isSynthesizing = false }
@@ -84,7 +90,12 @@ struct ContentView: View {
     }
 
     private func refresh() {
-        do { snapshot = try BridgeClient.fetch(job: jobPath, voices: voicesPath, workingDirectory: projectDirectory); errorMessage = nil }
+        do {
+            let value = try BridgeClient.fetch(job: jobPath, voices: voicesPath, workingDirectory: projectDirectory)
+            snapshot = value
+            if selectedVoicePath == nil { selectedVoicePath = value.voices.first(where: { $0.valid })?.path }
+            errorMessage = nil
+        }
         catch { errorMessage = "Python bridge 오류: \(error.localizedDescription)" }
     }
 }

@@ -117,6 +117,7 @@
 - [x] Run catalog now includes and displays the latest train loss when available.
 - [x] SwiftUI run list also displays validation loss and learning rate when available.
 - [x] SwiftUI status screen auto-refreshes bridge data every 10 seconds.
+- [x] SwiftUI TTS now exposes a Voice Package picker instead of always using the first package.
 - [x] Added guarded `scripts/notarize_macos_app.sh`; execution requires a configured Apple notarytool profile.
 - [x] Added GitHub Actions CI for Python unit tests and macOS Swift release build.
 - [x] Added `scripts/verify_all.sh` to run both local checks from the correct project directories.
