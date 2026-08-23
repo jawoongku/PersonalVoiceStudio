@@ -26,6 +26,7 @@ struct ContentView: View {
                     VStack(alignment: .leading) {
                         HStack { Text(run.name); Spacer(); Text(run.job_status ?? "unknown") }
                         if let checkpoint = run.checkpoint { Text(checkpoint).font(.caption).foregroundStyle(.secondary) }
+                        if let metrics = run.metrics { Text(metrics).font(.caption2).foregroundStyle(.secondary) }
                     }
                 }
             } else if let errorMessage {

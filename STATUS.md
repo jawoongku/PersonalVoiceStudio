@@ -113,6 +113,7 @@
 - [x] Added `list-runs` for local training run, job status, checkpoint, and metrics discovery; 62 tests pass.
 - [x] Extended the Python/Swift bridge snapshot with training run catalog data.
 - [x] SwiftUI run list now shows checkpoint paths for model management handoff.
+- [x] SwiftUI run list also shows metrics file paths.
 - [x] Added guarded `scripts/notarize_macos_app.sh`; execution requires a configured Apple notarytool profile.
 - [x] Added GitHub Actions CI for Python unit tests and macOS Swift release build.
 - [x] Added `scripts/verify_all.sh` to run both local checks from the correct project directories.
