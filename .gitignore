@@ -4,6 +4,7 @@ data/*_prepared/
 data/**/transcripts.csv
 artifacts/
 output/
+mac_app/.build/
 *.wav
 *.flac
 *.m4a
