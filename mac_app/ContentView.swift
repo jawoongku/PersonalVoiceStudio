@@ -177,7 +177,8 @@ struct ContentView: View {
                         if recordings.isEmpty {
                             Text("아직 저장된 녹음 파일이 없습니다.").foregroundStyle(.secondary)
                         } else {
-                            LazyVStack(alignment: .leading, spacing: 8) {
+                            ScrollView(.vertical) {
+                                LazyVStack(alignment: .leading, spacing: 8) {
                                 ForEach(recordings, id: \.self) { recording in
                                     HStack {
                                         Toggle("", isOn: Binding(get: { selectedRecordings.contains(recording) }, set: { checked in
@@ -193,7 +194,9 @@ struct ContentView: View {
                                     }
                                     if recording != recordings.last { Divider() }
                                 }
+                                }
                             }
+                            .frame(maxHeight: 320)
                         }
                         Text("선택 \(selectedRecordings.count)개").font(.caption).foregroundStyle(.secondary)
                         TextField("모델 이름", text: $modelName).textFieldStyle(.roundedBorder)
