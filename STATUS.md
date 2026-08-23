@@ -184,7 +184,7 @@
 - [x] Run the trainer on real MPS with real CosyVoice user parquet batches (8-row epoch).
 - [x] Connect the validated MPS train entrypoint to the actual CosyVoice3 model loader.
 - [x] Integrate metrics/checkpoint/resume utilities into the MPS CosyVoice3 training path.
-- [ ] Connect the generic loop to real CosyVoice3 parquet batches and MPS device.
+- [x] Add a generic-loop MPS entrypoint that consumes real CosyVoice3 parquet rows and writes reusable-loop checkpoints/metrics; host performance verification remains a separate acceptance run.
 - [x] Validate real generated parquet schema and feature columns.
 - [x] Install/provide an MPS-capable runtime and local model assets; host probe passes on `pvs-mps`.
 - [x] Verify `compare` with real MPS-trained adapter output; CAMPPlus similarity `0.919853` recorded.

@@ -10,6 +10,8 @@ from .checkpoint import load_adapter_checkpoint, save_adapter_checkpoint
 from .lora import freeze_base_parameters, inject_lora, trainable_parameters, validate_gradients
 from .trainer_mps import move_batch, resolve_device
 from .training_state import load_training_state, save_training_state
+from .training_loop import fit
+from .trainer_mps import TrainerConfig
 
 
 def _read_batch(data_list: str | Path, tokenizer, allowed_special, torch):
@@ -172,6 +174,71 @@ def run_user_parquet_mps_train(
     checkpoint = save_adapter_checkpoint(llm, output_path, step=len(train_rows), epoch=0, val_loss=dev_loss_value, config={"device": "mps", "rank": rank, "alpha": alpha, "train_rows": len(train_rows)})
     state_path = save_training_state(output_path.with_suffix(".state.pt"), optimizer=optimizer, scheduler=None, step=len(train_rows), epoch=0, config={"device": "mps", "rank": rank, "alpha": alpha})
     return {"status": "ok", "device": str(device), "train_rows": len(train_rows), "dev_rows": len(dev_rows), "steps": len(train_rows), "train_loss": last_loss, "dev_loss": dev_loss_value, "checkpoint": str(checkpoint), "state": str(state_path), "metrics": str(output_path.with_suffix(".metrics.jsonl")), "matched_modules": len(matched), "trainable": stats.trainable}
+
+
+def run_user_parquet_mps_train_generic(
+    train_data_list: str | Path,
+    dev_data_list: str | Path,
+    model_dir: str | Path,
+    output: str | Path,
+    upstream_root: str | Path = "/Users/jawoongku/CosyVoice",
+    *,
+    rank: int = 2,
+    alpha: int = 4,
+    progress: Callable[[int, dict[str, object]], None] | None = None,
+    should_cancel: Callable[[], bool] | None = None,
+) -> dict[str, object]:
+    """Run the reusable training loop against real CosyVoice parquet rows on MPS."""
+    import torch
+
+    device = resolve_device("mps")
+    module = _load_upstream(upstream_root)
+    model = module.AutoModel(model_dir=str(Path(model_dir).expanduser()), load_trt=False, fp16=False)
+    llm, matched = inject_lora(model.model.llm, ("q_proj", "k_proj", "v_proj", "o_proj"), rank=rank, alpha=alpha, dropout=0.0)
+    stats = freeze_base_parameters(llm)
+    llm.to(device).train()
+    tokenizer = model.frontend.tokenizer
+    allowed = model.frontend.allowed_special
+    train_rows = _read_rows(train_data_list, tokenizer, allowed, torch)
+    dev_rows = _read_rows(dev_data_list, tokenizer, allowed, torch)
+    for rows in (train_rows, dev_rows):
+        for row in rows:
+            row.pop("utt", None)
+
+    def forward(batch):
+        result = llm.forward(batch, device)
+        loss = result.get("loss") if isinstance(result, dict) else None
+        if loss is None:
+            raise ValueError("CosyVoice3 LLM forward did not return loss")
+        return loss
+
+    output_path = Path(output).expanduser()
+    result = fit(
+        llm,
+        train_rows,
+        dev_rows,
+        forward,
+        output_dir=output_path,
+        device=device,
+        config=TrainerConfig(device="mps", learning_rate=1e-4, grad_clip=1.0),
+        max_epochs=1,
+        progress=progress,
+        should_cancel=should_cancel,
+    )
+    return {
+        "status": result.get("status", "ok"),
+        "device": str(device),
+        "train_rows": len(train_rows),
+        "dev_rows": len(dev_rows),
+        "steps": result.get("step", 0),
+        "train_loss": result.get("train_loss"),
+        "dev_loss": result.get("best_val_loss"),
+        "checkpoint": str(output_path / "checkpoints" / "adapter_latest.pt"),
+        "state": str(output_path / "training_state.pt"),
+        "metrics": str(output_path / "metrics.jsonl"),
+        "matched_modules": len(matched),
+        "trainable": stats.trainable,
+    }
 
 
 def run_user_parquet_mps_resume(

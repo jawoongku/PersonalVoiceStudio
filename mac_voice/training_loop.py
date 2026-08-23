@@ -51,6 +51,8 @@ def fit(
     start_epoch: int = 0,
     resume_from: str | Path | None = None,
     cancel_path: str | Path | None = None,
+    progress: Callable[[int, dict[str, Any]], None] | None = None,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> dict[str, Any]:
     if max_epochs <= 0 or validate_every <= 0:
         raise ValueError("max_epochs and validate_every must be positive")
@@ -71,7 +73,10 @@ def fit(
     last_loss: float | None = None
     for epoch in range(start_epoch, start_epoch + max_epochs):
         for batch in train_batches:
-            if cancel_path is not None and Path(cancel_path).expanduser().exists():
+            cancelled = cancel_path is not None and Path(cancel_path).expanduser().exists()
+            if should_cancel is not None:
+                cancelled = cancelled or should_cancel()
+            if cancelled:
                 return {"step": step, "epoch": epoch, "train_loss": last_loss, "best_val_loss": best_val, "status": "cancelled"}
             started = time.perf_counter()
             last_loss = train_one_step(model, batch, forward_fn, optimizer, config, device)
@@ -82,6 +87,8 @@ def fit(
             elapsed = time.perf_counter() - started
             learning_rate = optimizer.param_groups[0]["lr"]
             metrics.log(step=step, train_loss=last_loss, val_loss=val_loss, learning_rate=learning_rate, step_time=elapsed)
+            if progress is not None:
+                progress(step, {"step": step, "train_loss": last_loss, "val_loss": val_loss, "learning_rate": learning_rate, "step_time": elapsed})
             save_adapter_checkpoint(model, checkpoints / "adapter_latest.pt", step=step, epoch=epoch, val_loss=val_loss, config={"trainer": config.__dict__})
             save_training_state(output / "training_state.pt", optimizer=optimizer, scheduler=scheduler, step=step, epoch=epoch, config={"trainer": config.__dict__})
             if val_loss is not None and (best_val is None or val_loss < best_val):
