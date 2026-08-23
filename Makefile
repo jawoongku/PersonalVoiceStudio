@@ -1,4 +1,4 @@
-.PHONY: verify app check-app ui notarize mps-doctor create-mps-env
+.PHONY: verify app check-app ui notarize mps-doctor create-mps-env release-readiness
 
 verify:
 	scripts/verify_all.sh
@@ -17,6 +17,9 @@ mps-doctor:
 
 create-mps-env:
 	scripts/create_mps_env.sh --dry-run
+
+release-readiness:
+	scripts/check_release_readiness.sh
 
 notarize:
 	scripts/notarize_macos_app.sh

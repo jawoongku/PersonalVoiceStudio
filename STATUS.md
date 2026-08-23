@@ -153,6 +153,7 @@
 - [x] Host Terminal probe passed: MPS tensor creation plus forward/backward/optimizer smoke succeeded on macOS 26.5.2.
 - [x] Host Terminal CosyVoice3 MPS baseline passed: Korean zero-shot output, 56,640 frames at 24 kHz mono, non-zero RMS.
 - [x] Added `retention-plan` CLI/JSON output for non-destructive run retention review.
+- [x] Added release signing readiness check; current machine has Apple Development certificates but no Developer ID Application certificate or notarization profile.
 - [x] Host Terminal user parquet MPS batch passed: utt `0002`, finite loss `3.8925516605`, 96 LoRA matches, non-zero gradients, and optimizer step.
 - [x] Host Terminal full user parquet MPS epoch passed: 8 train rows, 2 dev rows, final train loss `4.3410806656`, dev loss `4.5222234726`, adapter/checkpoint/state/metrics saved.
 - [x] Host Terminal MPS resume passed: reloaded step `8`, completed step `9` with loss `3.8594861031`, and wrote a new adapter/state pair.

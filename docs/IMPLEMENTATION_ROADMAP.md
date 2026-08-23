@@ -78,6 +78,7 @@
 - [x] MPS adapter·optimizer state 새 프로세스 resume 및 추가 step 검증
 - [x] MPS 학습 adapter의 Voice Package·synth·compare 연결 및 실제 WAV 검증
 - [x] 학습 run 보관 계획 CLI·JSON 조회 연결(비파괴)
+- [x] macOS 배포 서명·notarization 자격 사전 점검 스크립트
 - [ ] 장시간 학습 및 모델 관리
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)
 - [x] 비파괴적 학습 run 보관 후보 계산 기반
