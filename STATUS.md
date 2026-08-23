@@ -58,6 +58,7 @@
 - [x] Added filesystem-backed job metadata (`job.json`) with queued/running/completed/failed/cancelled states and `job-status` CLI.
 - [x] Added Voice Package discovery and validation with `list-voices` CLI.
 - [x] Added Gradio TTS panel with Voice Package selection, text input, output path, and synth-engine error reporting; UI construction and 38 tests pass.
+- [x] Connected generated WAV playback to the TTS panel; failed synthesis clears the audio output.
 
 ## In progress
 

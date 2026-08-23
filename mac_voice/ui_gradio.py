@@ -79,15 +79,15 @@ def register_recording(dataset_root: str | Path, audio_path: str | Path | None, 
     return report + f"\n저장 완료: {destination}"
 
 
-def synthesize_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, output: str) -> str:
+def synthesize_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, output: str) -> tuple[str, str | None]:
     if not text.strip():
-        return "텍스트를 입력해 주세요."
+        return "텍스트를 입력해 주세요.", None
     voice_path = Path(voice_root).expanduser() / voice_name
     try:
         result = run_synth(voice_path, text.strip(), output, model_dir=model_dir)
     except (OSError, RuntimeError, ValueError) as exc:
-        return f"합성할 수 없습니다: {exc}"
-    return f"합성 완료: {result}"
+        return f"합성할 수 없습니다: {exc}", None
+    return f"합성 완료: {result}", str(result)
 
 
 def build_demo():
@@ -125,7 +125,8 @@ def build_demo():
         output = gr.Textbox(label="출력 WAV", value="artifacts/ui_tts.wav")
         synth = gr.Button("음성 생성")
         synth_report = gr.Textbox(label="TTS 결과", lines=3)
-        synth.click(synthesize_for_ui, inputs=[voice_root, voice_name, tts_text, model_dir, output], outputs=synth_report)
+        synth_audio = gr.Audio(label="생성된 음성", type="filepath", interactive=False)
+        synth.click(synthesize_for_ui, inputs=[voice_root, voice_name, tts_text, model_dir, output], outputs=[synth_report, synth_audio])
     return demo
 
 

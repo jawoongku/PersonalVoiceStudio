@@ -28,6 +28,7 @@
 - [x] Voice 선택 (Gradio prototype)
 - [x] 텍스트 입력 (Gradio prototype)
 - [x] 기존 adapter 합성 엔진 연결 (환경·모델 준비 시 실행)
+- [x] 생성 WAV UI 재생 출력
 - [ ] 오디오 재생·저장·히스토리
 
 ## Phase 4 — macOS 제품화

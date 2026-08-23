@@ -40,4 +40,6 @@ class GradioPrototypeTests(unittest.TestCase):
             self.assertIn("저장할 문장입니다.", (dataset / "transcripts.csv").read_text(encoding="utf-8"))
 
     def test_synthesize_requires_text(self):
-        self.assertIn("텍스트를 입력", synthesize_for_ui("artifacts/voices", "demo", "", "missing", "out.wav"))
+        report, output = synthesize_for_ui("artifacts/voices", "demo", "", "missing", "out.wav")
+        self.assertIn("텍스트를 입력", report)
+        self.assertIsNone(output)
