@@ -25,6 +25,18 @@ class GradioPrototypeTests(unittest.TestCase):
     def test_transcript_similarity(self):
         self.assertIn("100.0%", compare_transcripts("안녕하세요", " 안녕 하세요 "))
 
+    def test_recording_inspection_flags_non_mono_sample_rate(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "stereo.wav"
+            with wave.open(str(path), "wb") as handle:
+                handle.setnchannels(2)
+                handle.setsampwidth(2)
+                handle.setframerate(16000)
+                handle.writeframes((1000).to_bytes(2, "little", signed=True) * 32000)
+            report = inspect_recording(path, "테스트 문장입니다.")
+            self.assertIn("24kHz가 권장됩니다", report)
+            self.assertIn("mono(1ch)가 권장됩니다", report)
+
     def test_asr_reports_missing_file(self):
         self.assertIn("ASR 입력 파일", transcribe_with_whisper("/tmp/missing.wav"))
 

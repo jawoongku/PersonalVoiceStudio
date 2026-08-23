@@ -70,6 +70,10 @@ def inspect_recording(audio_path: str | Path | None, transcript: str, recognized
     issues = []
     if duration <= 0 or duration > 30:
         issues.append("길이는 0초 초과 30초 이하가 권장됩니다")
+    if sample_rate != 24000:
+        issues.append("24kHz가 권장됩니다")
+    if channels != 1:
+        issues.append("mono(1ch)가 권장됩니다")
     if clipping:
         issues.append("clipping이 감지되었습니다")
     if rms < 0.005:

@@ -71,6 +71,7 @@
 - [x] Added optional Whisper `tiny`/`base` ASR button with lazy model loading and error reporting; 46 tests pass.
 - [x] Added isolated optional ASR dependency manifest (`requirements-asr.txt`) so the base environment remains unchanged.
 - [x] Added Gradio 3-compatible separate microphone/upload inputs with unified inspection and registration; 47 tests pass.
+- [x] Extended the recording quality gate to flag non-24kHz or non-mono input; 48 tests pass.
 
 ## In progress
 
