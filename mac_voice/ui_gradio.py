@@ -8,7 +8,7 @@ import csv
 import shutil
 from pathlib import Path
 
-from .dataset import _pcm_stats, render_validation, validate_dataset
+from .dataset import _pcm_stats, prepare_dataset, render_validation, validate_dataset
 from .catalog import list_voice_packages
 from .synth import run_synth
 from .history import append_tts_history, read_tts_history
@@ -100,6 +100,16 @@ def validate_dataset_for_ui(dataset_root: str) -> str:
     return render_validation(records, errors) or "검증할 파일이 없습니다."
 
 
+def prepare_dataset_for_ui(dataset_root: str, output_root: str) -> str:
+    try:
+        manifest = prepare_dataset(dataset_root, output_root)
+    except (OSError, RuntimeError, ValueError) as exc:
+        return f"학습 데이터 준비 실패: {exc}"
+    train_count = len(manifest["splits"]["train"])
+    dev_count = len(manifest["splits"]["dev"])
+    return f"준비 완료: {output_root}\ntrain={train_count}, dev={dev_count}"
+
+
 def build_demo():
     try:
         import gradio as gr
@@ -128,6 +138,10 @@ def build_demo():
         dataset_check = gr.Button("데이터셋 전체 검증")
         dataset_report = gr.Textbox(label="데이터셋 검증 결과", lines=8)
         dataset_check.click(validate_dataset_for_ui, inputs=dataset_root, outputs=dataset_report)
+        prepared_root = gr.Textbox(label="학습 데이터 출력 경로", value="data/my_voice_prepared")
+        prepare = gr.Button("학습 데이터 준비")
+        prepare_report = gr.Textbox(label="준비 결과", lines=4)
+        prepare.click(prepare_dataset_for_ui, inputs=[dataset_root, prepared_root], outputs=prepare_report)
         gr.Markdown("## Voice Package TTS")
         voice_root = gr.Textbox(label="Voice Package 폴더", value="artifacts/voices")
         voice_choices = [item["path"] for item in list_voice_packages("artifacts/voices")]

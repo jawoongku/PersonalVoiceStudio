@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, inspect_recording, register_recording, synthesize_for_ui, validate_dataset_for_ui
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, inspect_recording, prepare_dataset_for_ui, register_recording, synthesize_for_ui, validate_dataset_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -47,3 +47,7 @@ class GradioPrototypeTests(unittest.TestCase):
     def test_validate_dataset_reports_missing_directory(self):
         report = validate_dataset_for_ui("/tmp/does-not-exist-personal-voice")
         self.assertIn("missing raw audio directory", report)
+
+    def test_prepare_dataset_reports_missing_directory(self):
+        report = prepare_dataset_for_ui("/tmp/does-not-exist-personal-voice", "/tmp/prepared")
+        self.assertIn("학습 데이터 준비 실패", report)
