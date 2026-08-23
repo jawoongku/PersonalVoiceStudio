@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var recordingValidation: String?
     @State private var recordings: [URL] = []
     @State private var selectedRecordings: Set<URL> = []
+    @State private var modelName = "my_voice"
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
 
@@ -241,12 +242,14 @@ struct ContentView: View {
                         }
                     }
                     HStack {
-                        Text("선택 (selectedRecordings.count)개")
+                        Text("선택 \(selectedRecordings.count)개")
                             .font(.caption).foregroundStyle(.secondary)
                         Spacer()
-                        Button("선택 파일로 학습 데이터 만들기", action: createSelectedDataset)
-                            .disabled(selectedRecordings.isEmpty)
                     }
+                    TextField("모델 이름", text: $modelName)
+                        .textFieldStyle(.roundedBorder)
+                    Button("선택 파일로 모델 데이터 만들기", action: createSelectedDataset)
+                        .disabled(selectedRecordings.isEmpty || sanitizedModelName.isEmpty)
                 }
             }
             .frame(maxWidth: 760, alignment: .leading)
@@ -545,7 +548,7 @@ struct ContentView: View {
     }
 
     private func createSelectedDataset() {
-        let root = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice_selected", isDirectory: true)
+        let root = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/models/\(sanitizedModelName)", isDirectory: true)
         let raw = root.appendingPathComponent("raw", isDirectory: true)
         let transcript = root.appendingPathComponent("transcripts.csv")
         do {
@@ -563,10 +566,18 @@ struct ContentView: View {
                 }
             }
             try output.write(to: transcript, atomically: true, encoding: .utf8)
-            recordingValidation = "선택 파일 \(selectedRecordings.count)개로 학습 데이터 생성 완료: \(root.path)"
+            recordingValidation = "모델 \(modelName.trimmingCharacters(in: .whitespacesAndNewlines)) 데이터 생성 완료: \(selectedRecordings.count)개 · \(root.path)"
         } catch {
             errorMessage = "선택 파일 학습 데이터 생성에 실패했습니다. \(error.localizedDescription)"
         }
+    }
+
+    private var sanitizedModelName: String {
+        let value = modelName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let safe = value.map { character in
+            character.isLetter || character.isNumber || character == "_" || character == "-" ? character : "_"
+        }
+        return String(safe).trimmingCharacters(in: CharacterSet(charactersIn: "._-"))
     }
 
     private func recordingDuration(_ url: URL) -> String {
