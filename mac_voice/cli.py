@@ -20,6 +20,7 @@ from .compare import run_comparison
 from .narrate import run_narrate
 from .parquet import validate_data_list
 from .mps_smoke import run_mps_smoke
+from .mps_baseline import run_mps_baseline
 from .mps_runtime import probe as probe_mps_runtime, render as render_mps_runtime
 from .ui_gradio import launch_ui
 from .project import initialize_project
@@ -158,6 +159,14 @@ def build_parser() -> argparse.ArgumentParser:
     parquet.add_argument("--data-list", required=True)
     parquet.add_argument("--require-features", action="store_true")
     mps_smoke = subparsers.add_parser("mps-smoke", help="run a real MPS forward/backward/optimizer probe")
+    mps_baseline = subparsers.add_parser("mps-baseline", help="run CosyVoice3 baseline inference on MPS")
+    mps_baseline.add_argument("--model-dir", required=True)
+    mps_baseline.add_argument("--text", required=True)
+    mps_baseline.add_argument("--output", required=True)
+    mps_baseline.add_argument("--speaker-id", default=None)
+    mps_baseline.add_argument("--reference", default=None)
+    mps_baseline.add_argument("--reference-text", default=None)
+    mps_baseline.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
     mps_doctor = subparsers.add_parser("mps-doctor", help="diagnose MPS runtime compatibility without changing the environment")
     mps_doctor.add_argument("--json", action="store_true", dest="as_json")
     inspect_model = subparsers.add_parser("inspect-model", help="inspect runtime LoRA target modules")
@@ -355,6 +364,14 @@ def main(argv: list[str] | None = None) -> int:
         report = probe_mps_runtime()
         print(json.dumps(report, ensure_ascii=False) if args.as_json else render_mps_runtime(report))
         return 0 if report["status"] == "ready" else 1
+    if args.command == "mps-baseline":
+        try:
+            output = run_mps_baseline(args.model_dir, args.text, args.output, upstream_root=args.upstream_root, speaker_id=args.speaker_id, reference=args.reference, reference_text=args.reference_text)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] MPS baseline WAV: {output}")
+        return 0
     if args.command == "ui":
         try:
             launch_ui()

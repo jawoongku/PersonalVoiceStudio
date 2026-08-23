@@ -151,10 +151,11 @@
 - [x] Created the isolated `pvs-mps` candidate and tested PyTorch 2.5.1 and 2.7.1; repeated fresh-process probes still report `os-runtime-mismatch`, so the candidate is not accepted as MPS-ready.
 - [x] Tested latest PyTorch 2.13.0/torchaudio 2.11.0 in `pvs-mps`; this Codex execution context still reports `_mps_is_available=False`. A normal Terminal host probe remains required because PyTorch reports different MPS behavior inside Codex on the same host.
 - [x] Host Terminal probe passed: MPS tensor creation plus forward/backward/optimizer smoke succeeded on macOS 26.5.2.
+- [x] Host Terminal CosyVoice3 MPS baseline passed: Korean zero-shot output, 56,640 frames at 24 kHz mono, non-zero RMS.
 - [x] Exposed MPS readiness, tensor probe, and action guidance through `bridge-status` and the SwiftUI shell; 67 tests pass.
 - [x] Locate/provision the core `Fun-CosyVoice3-0.5B` model assets without duplicating an existing copy.
-- [ ] Implement and verify baseline MPS inference.
-- [ ] Verify baseline with a real local CosyVoice3 model and non-silent WAV.
+- [x] Implement and verify baseline MPS inference (LLM/Flow on MPS; HiFiGAN float64 F0 path on CPU).
+- [x] Verify baseline with a real local CosyVoice3 model and non-silent 24 kHz mono WAV.
 - [x] Verify zero-shot clone with a temporary reference WAV and local model (CPU only).
 - [ ] Connect the trained adapter to the CosyVoice3 inference graph for `synth`.
 - [x] Verify adapter injection and synth with a real base model and CPU-smoke adapter (quality evaluation remains pending).
