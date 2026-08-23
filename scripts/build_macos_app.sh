@@ -12,6 +12,7 @@ cp .build/arm64-apple-macosx/release/PersonalVoiceStudio "$APP_DIR/Contents/MacO
 cp Info.plist "$APP_DIR/Contents/Info.plist"
 if [[ -n "${SIGNING_IDENTITY:-}" ]]; then
   codesign --force --deep --options runtime --sign "$SIGNING_IDENTITY" "$APP_DIR"
+  codesign --verify --deep --strict "$APP_DIR"
   echo "[OK] signed with: $SIGNING_IDENTITY"
 else
   echo "[INFO] unsigned development bundle (set SIGNING_IDENTITY to sign)"

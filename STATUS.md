@@ -106,6 +106,7 @@
 - [x] Added `mac_app/Info.plist` with `NSMicrophoneUsageDescription` for app-bundle permission prompts.
 - [x] Added and ran `scripts/build_macos_app.sh` to create a release `.app` bundle; signing/notarization remains pending.
 - [x] Added bundle identifier/version metadata and optional `SIGNING_IDENTITY` codesign path; notarization remains pending.
+- [x] Signed builds now run `codesign --verify --deep --strict` after signing.
 - [x] Added guarded `scripts/notarize_macos_app.sh`; execution requires a configured Apple notarytool profile.
 - [x] Added GitHub Actions CI for Python unit tests and macOS Swift release build.
 - [x] Added `scripts/verify_all.sh` to run both local checks from the correct project directories.
