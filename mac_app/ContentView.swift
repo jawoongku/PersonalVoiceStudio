@@ -623,8 +623,10 @@ struct ContentView: View {
                 var output = "filename,text\n"
                 var missing: [String] = []
                 for source in sources {
-                    let prefix = "\"\(source.lastPathComponent)\"," 
-                    guard let line = sourceLines.first(where: { $0.hasPrefix(prefix) }) else { missing.append(source.lastPathComponent); continue }
+                    let filename = source.lastPathComponent
+                    let quotedPrefix = "\"\(filename)\"," 
+                    let plainPrefix = "\(filename),"
+                    guard let line = sourceLines.first(where: { $0.hasPrefix(quotedPrefix) || $0.hasPrefix(plainPrefix) }) else { missing.append(filename); continue }
                     output += line + "\n"
                 }
                 guard missing.isEmpty else { throw NSError(domain: "PersonalVoiceStudio", code: 3, userInfo: [NSLocalizedDescriptionKey: "transcript가 없는 파일: \(missing.joined(separator: ", "))"]) }
