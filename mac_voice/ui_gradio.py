@@ -182,7 +182,7 @@ def job_status_for_ui(job_path: str) -> str:
     return "\n".join(lines)
 
 
-def narrate_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, output: str) -> tuple[str, str | None]:
+def narrate_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, output: str, max_chars: int = 180) -> tuple[str, str | None]:
     if not text.strip():
         return "긴 텍스트를 입력해 주세요.", None
     fd, script_name = tempfile.mkstemp(prefix="pvs_narrate_", suffix=".txt")
@@ -190,7 +190,7 @@ def narrate_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, 
     script_path = Path(script_name)
     script_path.write_text(text.strip(), encoding="utf-8")
     try:
-        result = run_narrate(Path(voice_root).expanduser() / voice_name, script_path, output, model_dir=model_dir)
+        result = run_narrate(Path(voice_root).expanduser() / voice_name, script_path, output, model_dir=model_dir, max_chars=int(max_chars))
     except (OSError, RuntimeError, ValueError) as exc:
         return f"긴 글 합성 실패: {exc}", None
     finally:
@@ -280,10 +280,11 @@ def build_demo():
         gr.Markdown("## 긴 글 TTS")
         long_text = gr.Textbox(label="긴 텍스트", lines=8)
         long_output = gr.Textbox(label="긴 글 출력 WAV", value="artifacts/ui_narration.wav")
+        long_max_chars = gr.Slider(60, 400, value=180, step=10, label="문장 분할 최대 글자 수")
         narrate = gr.Button("긴 글 음성 생성")
         narrate_report = gr.Textbox(label="긴 글 결과", lines=3)
         narrate_audio = gr.Audio(label="긴 글 생성 음성", type="filepath", interactive=False)
-        narrate.click(narrate_for_ui, inputs=[voice_root, voice_name, long_text, model_dir, long_output], outputs=[narrate_report, narrate_audio])
+        narrate.click(narrate_for_ui, inputs=[voice_root, voice_name, long_text, model_dir, long_output, long_max_chars], outputs=[narrate_report, narrate_audio])
         history = gr.Textbox(label="최근 생성 기록", lines=6)
         refresh_history = gr.Button("히스토리 새로고침")
         refresh_history.click(lambda: "\n".join(f"{item.get('created_at', '')} | {item.get('voice', '')} | {item.get('text', '')}" for item in read_tts_history("artifacts/tts_history.jsonl")), outputs=history)

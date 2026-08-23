@@ -24,6 +24,7 @@
 - [x] Gradio 3 호환 마이크·파일 업로드 입력
 - [x] UI 품질 gate에 24kHz·mono 권장 조건 추가
 - [x] 긴 글 TTS UI 연결 및 생성 WAV 재생
+- [x] 긴 글 TTS 문장 분할 길이 UI 조절
 - [x] WAV 품질 gate (길이·음량·clipping·무음; ASR 일치도는 후속)
 - [x] Gradio recording 화면 골격 및 runtime 생성 검증 (Gradio 3.43.2)
 

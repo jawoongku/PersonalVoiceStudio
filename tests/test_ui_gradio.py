@@ -48,6 +48,10 @@ class GradioPrototypeTests(unittest.TestCase):
         self.assertIn("긴 텍스트를 입력", report)
         self.assertIsNone(output)
 
+    def test_narrate_empty_text_accepts_custom_chunk_size(self):
+        report, _ = narrate_for_ui("artifacts/voices", "demo", "", "missing", "out.wav", 120)
+        self.assertIn("긴 텍스트를 입력", report)
+
     def test_recording_inspection_requires_transcript(self):
         self.assertIn("transcript", inspect_recording("/tmp/missing.wav", ""))
 
