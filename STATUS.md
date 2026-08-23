@@ -189,10 +189,10 @@
 - [x] Install/provide an MPS-capable runtime and local model assets; host probe passes on `pvs-mps`.
 - [x] Verify `compare` with real MPS-trained adapter output; CAMPPlus similarity `0.919853` recorded.
 
-## Blocked
+## Blocked / context-dependent
 
-- MPS remains unavailable after upgrading `cosyvoice` to PyTorch 2.13.0 (`mps_built=True`, `mps_available=False`).
-- MPS probe reports the runtime rejection: `The MPS backend is supported on macOS 14.0+. Current OS version can be queried using sw_vers`; macOS reports 26.5.2, indicating this PyTorch build does not recognize the current OS version.
+- Codex 실행 컨텍스트에서는 PyTorch 2.13.0이 `mps_available=False` 및 `os-runtime-mismatch`를 보고할 수 있다. 일반 macOS Terminal의 `pvs-mps` 호스트 probe에서는 MPS tensor·forward/backward/optimizer와 실제 CosyVoice3 baseline·학습·resume·합성이 통과했다.
+- Developer ID Application 인증서와 notarization profile이 없어 배포 서명/notarization은 대기 중이다.
 - `/Users/jawoongku/Models/Fun-CosyVoice3-0.5B` core assets are present; optional TensorRT estimator remains incomplete.
 - `sox` is not installed; `ffmpeg` is available.
 
@@ -204,4 +204,4 @@ python -m mac_voice prepare --dataset <dataset> --output <prepared>
 
 ## Last verified result
 
-The doctor command reports model assets and the clean upstream commit in a human-readable format. Temporary WAV fixtures passed `validate-data` and `prepare`, including 24 kHz mono conversion and deterministic train/dev manifests. Core model assets are present, a CPU zero-shot clone generated a 13.6-second 24 kHz mono WAV, the real feature pipeline generated embeddings, speech tokens, and feature-bearing parquet validated through `data.list`, the Voice Package/synth path generated a 4.84-second 24 kHz mono PCM WAV from an initial adapter, and compare/narrate generated valid CPU outputs. Upstream-compatible feature wrappers, feature artifact finite-value checks, actual CosyVoice3 LLM target introspection and CPU adapter checkpoint reload, a base-model-free Voice Package builder, validated training config/entrypoint, baseline/zero-shot adapters, actual CosyVoice3 LLM adapter injection, README usage guide, compare/narrate utilities, resume/metrics utilities, a resumable generic validation/checkpoint training loop, parquet data-list validation, and MPS smoke probe are implemented without modifying `/Users/jawoongku/CosyVoice`; all 28 tests pass under the `cosyvoice` environment. MPS remains unavailable, and the adapter was untrained, so no trained voice quality claim is made.
+Host Terminal verification now also covers the real MPS path: 8-row train/2-row dev parquet epoch, checkpoint metrics, resume step, adapter-backed MPS synthesis, and CAMPPlus similarity comparison. The generic trainer still needs direct integration with real CosyVoice3 parquet batches; distribution signing/notarization remains credential-gated.

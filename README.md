@@ -31,7 +31,7 @@ scripts/verify_all.sh
 - Voice Package 생성/검증
 - baseline/clone/synth/compare/narrate CLI 진입점
 
-핵심 모델 자산과 CPU zero-shot clone, 초기 adapter를 사용한 Voice Package/synth/compare/narrate 경로까지 검증했습니다. MPS inference/training과 trained adapter 품질은 아직 `NOT TESTED`/`BLOCKED` 상태입니다.
+핵심 모델 자산과 CPU zero-shot clone, 초기 adapter를 사용한 Voice Package/synth/compare/narrate 경로를 검증했습니다. 호스트 macOS Terminal에서는 실제 CosyVoice3 MPS baseline, 사용자 parquet 1-epoch 학습·resume, adapter 합성·화자 유사도 비교까지 검증했습니다. Codex 실행 컨텍스트에서는 macOS/PyTorch 런타임 판정이 다를 수 있으므로 MPS 명령은 호스트 probe 결과를 기준으로 판단합니다.
 
 ## Gradio UI prototype
 
@@ -42,9 +42,9 @@ python -m pip install -r requirements-ui.txt
 python -m mac_voice ui
 ```
 
-현재 Gradio UI와 SwiftUI macOS shell, Python bridge, AVAudioEngine 녹음까지 구현되어 있습니다. SwiftUI 앱 서명·notarization과 화자 유사도 평가·MPS runtime은 후속 단계입니다.
+현재 Gradio UI와 SwiftUI macOS shell, Python bridge, AVAudioEngine 녹음까지 구현되어 있습니다. SwiftUI 앱 서명·notarization은 Apple Developer 자격이 필요하며, 화자 유사도 평가와 MPS 장치 선택·학습 상태 표시도 연결되어 있습니다.
 
-남은 외부 의존 단계는 Apple Developer 서명 자격, 검증된 speaker-embedding scorer, MPS 인식 PyTorch runtime, 장시간 학습용 모델 저장 정책이 필요합니다.
+남은 외부 의존 단계는 Apple Developer 서명 자격과 notarization profile입니다. 장시간 학습용 모델 보존 정책은 retention/manifest/job progress·cancel/checkpoint resume 기반을 추가했으며, generic trainer를 실제 CosyVoice3 parquet 학습 경로에 통합하는 작업이 남아 있습니다.
 
 ### MPS 환경 점검
 
@@ -56,9 +56,9 @@ make mps-doctor
 conda run -n cosyvoice python -m mac_voice mps-doctor --json
 ```
 
-현재 이 Mac에서는 PyTorch 2.13.0이 macOS 26.5.2를 인식하지 못해 `os-runtime-mismatch`가 보고됩니다. PyTorch가 해당 macOS major를 명시적으로 지원하는 빌드로 교체되거나 지원되는 macOS에서 실행되기 전에는 MPS 학습을 PASS로 표시하지 않습니다.
+Codex 실행 컨텍스트의 `mps-doctor`는 PyTorch 2.13.0/macOS 26.5.2 조합을 `os-runtime-mismatch`로 보고할 수 있습니다. 반면 일반 macOS Terminal의 동일 호스트 probe에서는 MPS tensor와 forward/backward/optimizer가 통과했으며, 실제 baseline·학습·resume·합성도 완료했습니다. 따라서 최종 판정은 `scripts/host_mps_probe.sh`와 관련 host 스크립트 결과를 기준으로 합니다.
 
-기존 환경을 변경하지 않고 후보 환경을 만들려면 다음 명령을 사용합니다. 기본값은 별도 `pvs-mps` 환경과 PyTorch 2.5.1이며, 실제 생성 전에는 dry-run으로 명령만 출력합니다. 현재 이 Mac에서는 PyTorch 2.5.1과 2.7.1 모두 새 프로세스의 tensor probe를 통과하지 못했으므로 아직 MPS 지원 환경으로 확정하지 않았습니다.
+기존 환경을 변경하지 않고 후보 환경을 만들려면 다음 명령을 사용합니다. 기본값은 별도 `pvs-mps` 환경과 PyTorch 2.5.1이며, 실제 생성 전에는 dry-run으로 명령만 출력합니다. 현재 검증된 호스트 환경은 `pvs-mps`의 PyTorch 2.13.0/torchaudio 2.11.0입니다.
 
 최신 2.13.0은 Codex 실행 컨텍스트에서는 제한될 수 있지만, 일반 macOS Terminal의 호스트 probe에서는 MPS가 정상 활성화되었습니다. 저장소의 호스트 검증 스크립트는 다음과 같습니다.
 
