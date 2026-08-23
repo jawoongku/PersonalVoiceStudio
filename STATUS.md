@@ -114,6 +114,7 @@
 - [x] Synchronized roadmap: unsigned `.app` packaging is complete; Developer ID signing/notarization remains pending.
 - [x] SwiftUI shell accepts `PVS_PROJECT_DIR` for reliable bridge paths when launched from an `.app` bundle.
 - [x] SwiftUI bridge accepts `PVS_PYTHON` to select the Python/Conda runtime.
+- [x] SwiftUI app accepts `PVS_JOB_PATH` and `PVS_VOICES_PATH` for project-specific state.
 
 ## In progress
 
