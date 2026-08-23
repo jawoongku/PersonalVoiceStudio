@@ -51,7 +51,8 @@
 - [x] Extended real user-data CPU LoRA training to 20 steps (`train_loss=3.684267`, `dev_loss=4.185104`), built a new Voice Package, and generated a 3.72-second user-reference WAV.
 - [x] Generated a before/after CPU comparison for the 20-step adapter; both outputs are valid non-silent 24 kHz mono WAVs (before 3.68s, after 3.72s). Objective speaker-similarity scoring remains unavailable.
 - [x] Synth reads LoRA rank/alpha/dropout from adapter checkpoint metadata; rank-2 user package inference is now compatible.
-- [x] Added the first Gradio UI prototype: recommended sentence queue, microphone/upload input, transcript field, and WAV quality report; 3 UI core tests pass (Gradio package is not installed, so browser runtime remains pending).
+- [x] Added the first Gradio UI prototype: recommended sentence queue, microphone input, transcript field, and WAV quality report; 3 UI core tests pass.
+- [x] Verified the UI can construct a Gradio `Blocks` app in the `cosyvoice` environment with Gradio 3.43.2; pinned compatible UI dependencies in `requirements-ui.txt`.
 
 ## In progress
 

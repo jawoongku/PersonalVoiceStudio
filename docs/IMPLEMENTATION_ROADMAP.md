@@ -12,7 +12,7 @@
 - [x] 문장 추천 큐 (초기 정적 문장 세트)
 - [x] 녹음 파일 등록 및 transcript 입력 (Gradio prototype)
 - [x] WAV 품질 gate (길이·음량·clipping·무음; ASR 일치도는 후속)
-- [x] Gradio recording 화면 골격 (Gradio dependency 설치 후 runtime 검증 필요)
+- [x] Gradio recording 화면 골격 및 runtime 생성 검증 (Gradio 3.43.2)
 
 ## Phase 2 — 학습 MVP
 

@@ -23,9 +23,10 @@ Apple Silicon Mac에서 CosyVoice3 기반 음성 데이터 준비, LoRA 학습, 
 
 ## Gradio UI prototype
 
-Gradio가 설치된 환경에서는 다음 명령으로 문장 추천·마이크 녹음·transcript·WAV 품질 검사를 시작할 수 있습니다.
+`requirements-ui.txt`를 설치한 환경에서는 다음 명령으로 문장 추천·마이크 녹음·transcript·WAV 품질 검사를 시작할 수 있습니다.
 
 ```bash
+python -m pip install -r requirements-ui.txt
 python -m mac_voice ui
 ```
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import wave
+import inspect as pyinspect
 from pathlib import Path
 
 from .dataset import _pcm_stats
@@ -57,7 +58,14 @@ def build_demo():
     with gr.Blocks(title="Personal Voice Studio") as demo:
         gr.Markdown("# Personal Voice Studio\n문장을 읽고 녹음한 뒤 학습 가능 여부를 확인합니다.")
         sentence = gr.Dropdown(RECOMMENDED_SENTENCES, value=RECOMMENDED_SENTENCES[0], label="권장 문장")
-        audio = gr.Audio(sources=["microphone", "upload"], type="filepath", label="음성 녹음")
+        # Gradio 3.x (required by matcha-tts) uses ``source`` while newer
+        # releases use ``sources``. Keep the prototype compatible with both.
+        audio_kwargs = {"type": "filepath", "label": "음성 녹음"}
+        if "sources" in pyinspect.signature(gr.Audio).parameters:
+            audio = gr.Audio(sources=["microphone", "upload"], **audio_kwargs)
+        else:
+            audio = gr.Audio(source="microphone", **audio_kwargs)
+            gr.Markdown("Gradio 3.x에서는 마이크 입력을 사용하세요. 업로드 파일은 다음 단계에서 통합합니다.")
         transcript = gr.Textbox(label="Transcript", value=RECOMMENDED_SENTENCES[0])
         inspect = gr.Button("품질 검사")
         report = gr.Textbox(label="검사 결과", lines=5)
