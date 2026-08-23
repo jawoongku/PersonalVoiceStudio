@@ -8,6 +8,7 @@ from pathlib import Path
 from .baseline import _install_wave_loader, run_zero_shot
 from .synth import run_synth
 from .voice import validate_voice_package
+from .similarity import evaluate_audio_similarity
 
 
 def _audio_summary(path: Path) -> dict:
@@ -39,14 +40,21 @@ def run_comparison(voice_dir: str | Path, text: str, output_dir: str | Path, *, 
     reference_text = (voice_path / "reference.txt").read_text(encoding="utf-8").strip()
     run_zero_shot(model_dir, voice_path / "reference.wav", reference_text, text, before, upstream_root=upstream_root)
     run_synth(voice_path, text, after, model_dir=model_dir, upstream_root=upstream_root)
+    similarity: dict
+    campplus = Path(model_dir).expanduser() / "campplus.onnx"
+    if campplus.is_file():
+        try:
+            similarity = evaluate_audio_similarity(voice_path / "reference.wav", after, campplus)
+            similarity["status"] = "scored"
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            similarity = {"status": "unavailable", "reason": str(exc), "model": str(campplus)}
+    else:
+        similarity = {"status": "unavailable", "reason": "campplus.onnx not found", "model": str(campplus)}
     comparison = {
         "text": text,
         "before": _audio_summary(before),
         "after": _audio_summary(after),
-        "speaker_similarity": {
-            "status": "not_available",
-            "reason": "No validated speaker-embedding scorer is configured; audio statistics are not a similarity score.",
-        },
+        "speaker_similarity": similarity,
     }
     report = destination / "comparison.json"
     report.write_text(json.dumps(comparison, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -26,7 +26,7 @@ from .project import initialize_project
 from .jobs import read_job
 from .catalog import list_voice_packages
 from .bridge import job_snapshot, mps_snapshot, run_catalog, voice_catalog
-from .similarity import cosine_similarity
+from .similarity import cosine_similarity, evaluate_audio_similarity
 from .runs import list_runs
 from .jobs import create_job, update_job
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
@@ -53,6 +53,11 @@ def build_parser() -> argparse.ArgumentParser:
     similarity.add_argument("--right", help="comma-separated float vector")
     similarity.add_argument("--left-file", help="JSON array embedding file")
     similarity.add_argument("--right-file", help="JSON array embedding file")
+    speaker_similarity = subparsers.add_parser("speaker-similarity", help="score two WAV files with CAMPPlus embeddings")
+    speaker_similarity.add_argument("--reference", required=True)
+    speaker_similarity.add_argument("--generated", required=True)
+    speaker_similarity.add_argument("--model", required=True, help="path to campplus.onnx")
+    speaker_similarity.add_argument("--output", default=None, help="optional JSON report path")
     runs = subparsers.add_parser("list-runs", help="list local training runs and artifacts")
     runs.add_argument("--root", default="artifacts/runs")
     runs.add_argument("--json", action="store_true", dest="as_json")
@@ -260,6 +265,16 @@ def main(argv: list[str] | None = None) -> int:
                 right = [float(value) for value in args.right.split(",") if value.strip()]
             print(f"{cosine_similarity(left, right):.6f}")
         except (OSError, json.JSONDecodeError, ValueError, TypeError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        return 0
+    if args.command == "speaker-similarity":
+        try:
+            report = evaluate_audio_similarity(args.reference, args.generated, args.model)
+            if args.output:
+                Path(args.output).expanduser().write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            print(json.dumps(report, ensure_ascii=False))
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
             print(f"[ERROR] {exc}")
             return 1
         return 0
