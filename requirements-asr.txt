@@ -1,0 +1,2 @@
+# Optional automatic transcript comparison in the Gradio UI.
+openai-whisper
