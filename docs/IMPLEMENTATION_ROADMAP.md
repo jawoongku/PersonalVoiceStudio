@@ -4,7 +4,7 @@
 
 - [x] 기존 Python CLI와 CosyVoice3 wrapper 확인
 - [x] 데이터/feature/checkpoint/TTS 경로 검증
-- [ ] 새 제품 명세를 코드 구조에 반영
+- [x] 새 제품 명세를 Python engine·Gradio UI·SwiftUI bridge 구조에 반영
 
 ## Phase 1 — Python MVP
 
