@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    private let refreshTimer = Timer.publish(every: 10, on: .main, in: .common).autoconnect()
     @State private var snapshot: BridgeSnapshot?
     @State private var errorMessage: String?
     @State private var ttsText = ""
@@ -79,6 +80,7 @@ struct ContentView: View {
         }
         .padding()
         .task { refresh() }
+        .onReceive(refreshTimer) { _ in refresh() }
     }
 
     private func refresh() {
