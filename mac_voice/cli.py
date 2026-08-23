@@ -46,8 +46,10 @@ def build_parser() -> argparse.ArgumentParser:
     bridge_status.add_argument("--job", required=True)
     bridge_status.add_argument("--voices", default="artifacts/voices")
     similarity = subparsers.add_parser("similarity", help="calculate cosine similarity for two embedding vectors")
-    similarity.add_argument("--left", required=True, help="comma-separated float vector")
-    similarity.add_argument("--right", required=True, help="comma-separated float vector")
+    similarity.add_argument("--left", help="comma-separated float vector")
+    similarity.add_argument("--right", help="comma-separated float vector")
+    similarity.add_argument("--left-file", help="JSON array embedding file")
+    similarity.add_argument("--right-file", help="JSON array embedding file")
     job_create = subparsers.add_parser("job-create", help="create a queued training job metadata file")
     job_create.add_argument("--output", required=True, help="job output directory")
     job_create.add_argument("--command", dest="job_command", default="train")
@@ -238,10 +240,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "similarity":
         try:
-            left = [float(value) for value in args.left.split(",") if value.strip()]
-            right = [float(value) for value in args.right.split(",") if value.strip()]
+            if args.left_file or args.right_file:
+                if not args.left_file or not args.right_file:
+                    raise ValueError("left-file and right-file must be provided together")
+                left = json.loads(Path(args.left_file).read_text(encoding="utf-8"))
+                right = json.loads(Path(args.right_file).read_text(encoding="utf-8"))
+            else:
+                if not args.left or not args.right:
+                    raise ValueError("left/right or left-file/right-file is required")
+                left = [float(value) for value in args.left.split(",") if value.strip()]
+                right = [float(value) for value in args.right.split(",") if value.strip()]
             print(f"{cosine_similarity(left, right):.6f}")
-        except (ValueError, TypeError) as exc:
+        except (OSError, json.JSONDecodeError, ValueError, TypeError) as exc:
             print(f"[ERROR] {exc}")
             return 1
         return 0

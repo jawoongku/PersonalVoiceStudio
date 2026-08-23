@@ -104,6 +104,7 @@ python -m mac_voice list-voices --root artifacts/voices
 자동화에서는 `python -m mac_voice list-voices --root artifacts/voices --json`을 사용할 수 있습니다.
 SwiftUI 브리지는 `python -m mac_voice bridge-status --job <job.json> --voices artifacts/voices`로 통합 상태를 읽을 수 있습니다.
 임베딩 벡터 비교는 `python -m mac_voice similarity --left 1,2 --right 1,2`로 실행할 수 있습니다.
+JSON 배열 파일은 `--left-file`과 `--right-file` 옵션으로 지정합니다.
 앱 실행 시 `PVS_PROJECT_DIR`, `PVS_PYTHON`, `PVS_JOB_PATH`, `PVS_VOICES_PATH` 환경 변수로 프로젝트와 runtime 경로를 지정할 수 있습니다.
 
 학습 run에서 Voice Package를 만들려면:

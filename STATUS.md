@@ -118,6 +118,7 @@
 - [x] Final local verification after SwiftPM ignore update: 59 Python tests and Swift release build pass; worktree clean.
 - [x] Added pure-Python cosine similarity primitive for future validated speaker embeddings; actual embedding extraction/scoring remains pending.
 - [x] Exposed the similarity primitive through the `similarity` CLI command.
+- [x] Similarity CLI now accepts JSON embedding files as well as inline vectors.
 
 ## In progress
 
