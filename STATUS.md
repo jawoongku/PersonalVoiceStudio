@@ -160,6 +160,7 @@
 - [x] SwiftUI now exposes a running-job cancellation button backed by `job-update --status cancelled`.
 - [x] SwiftUI job status now displays step, train/dev loss metrics, and job errors.
 - [x] MPS training job metrics now include allocated MPS memory and SwiftUI displays it in MB.
+- [x] MPS training metrics JSONL now records current and driver allocated memory per step.
 - [x] Host Terminal MPS adapter synth passed: generated a 5.92-second WAV from `my_voice_mps_epoch`; CAMPPlus similarity `0.915502`.
 - [x] SwiftUI bridge now selects CPU or MPS Voice Package synthesis via `PVS_TTS_DEVICE` (CPU remains the default).
 - [x] SwiftUI now exposes a CPU/MPS segmented TTS selector and disables MPS when the bridge tensor probe is not ready.

@@ -149,9 +149,10 @@ def run_user_parquet_mps_train(
             raise RuntimeError(f"MPS gradient validation failed at step {step}: " + "; ".join(problems))
         optimizer.step()
         last_loss = float(loss.detach().cpu().item())
-        metrics.log(step=step, train_loss=last_loss, learning_rate=1e-4)
+        allocated = int(torch.mps.current_allocated_memory()) if hasattr(torch, "mps") else 0
+        driver = int(torch.mps.driver_allocated_memory()) if hasattr(torch, "mps") and hasattr(torch.mps, "driver_allocated_memory") else 0
+        metrics.log(step=step, train_loss=last_loss, learning_rate=1e-4, mps_memory=allocated, driver_memory=driver)
         if progress is not None:
-            allocated = int(torch.mps.current_allocated_memory()) if hasattr(torch, "mps") else 0
             progress(step, {"step": step, "train_loss": last_loss, "learning_rate": 1e-4, "mps_memory": allocated})
     llm.eval()
     dev_losses = []
@@ -163,9 +164,10 @@ def run_user_parquet_mps_train(
                 raise FloatingPointError("MPS dev loss is non-finite")
             dev_losses.append(float(dev_loss.detach().cpu().item()))
     dev_loss_value = sum(dev_losses) / len(dev_losses)
-    metrics.log(step=len(train_rows), val_loss=dev_loss_value, learning_rate=1e-4)
+    allocated = int(torch.mps.current_allocated_memory()) if hasattr(torch, "mps") else 0
+    driver = int(torch.mps.driver_allocated_memory()) if hasattr(torch, "mps") and hasattr(torch.mps, "driver_allocated_memory") else 0
+    metrics.log(step=len(train_rows), val_loss=dev_loss_value, learning_rate=1e-4, mps_memory=allocated, driver_memory=driver)
     if progress is not None:
-        allocated = int(torch.mps.current_allocated_memory()) if hasattr(torch, "mps") else 0
         progress(len(train_rows), {"step": len(train_rows), "val_loss": dev_loss_value, "learning_rate": 1e-4, "mps_memory": allocated})
     checkpoint = save_adapter_checkpoint(llm, output_path, step=len(train_rows), epoch=0, val_loss=dev_loss_value, config={"device": "mps", "rank": rank, "alpha": alpha, "train_rows": len(train_rows)})
     state_path = save_training_state(output_path.with_suffix(".state.pt"), optimizer=optimizer, scheduler=None, step=len(train_rows), epoch=0, config={"device": "mps", "rank": rank, "alpha": alpha})

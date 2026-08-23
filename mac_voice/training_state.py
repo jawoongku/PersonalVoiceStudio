@@ -49,9 +49,9 @@ class MetricsLogger:
         self.path = Path(path).expanduser()
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
-    def log(self, *, step: int, train_loss: float | None = None, val_loss: float | None = None, learning_rate: float | None = None, step_time: float | None = None, samples_per_sec: float | None = None, mps_memory: int | None = None, rss_memory: int | None = None) -> None:
+    def log(self, *, step: int, train_loss: float | None = None, val_loss: float | None = None, learning_rate: float | None = None, step_time: float | None = None, samples_per_sec: float | None = None, mps_memory: int | None = None, rss_memory: int | None = None, driver_memory: int | None = None) -> None:
         record: dict[str, Any] = {"timestamp": datetime.now(timezone.utc).isoformat(), "step": step}
-        for key, value in (("train_loss", train_loss), ("val_loss", val_loss), ("learning_rate", learning_rate), ("step_time", step_time), ("samples_per_sec", samples_per_sec), ("mps_memory", mps_memory), ("rss_memory", rss_memory)):
+        for key, value in (("train_loss", train_loss), ("val_loss", val_loss), ("learning_rate", learning_rate), ("step_time", step_time), ("samples_per_sec", samples_per_sec), ("mps_memory", mps_memory), ("rss_memory", rss_memory), ("driver_memory", driver_memory)):
             if value is not None:
                 record[key] = value
         with self.path.open("a", encoding="utf-8") as handle:
