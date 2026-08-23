@@ -85,6 +85,7 @@
 - [x] MPS 전체 학습 명령의 job 상태·metrics 연동
 - [x] MPS 전체 학습 step별 job progress·loss 기록
 - [x] MPS 전체 학습 job 취소 상태의 batch 경계 중단 처리
+- [x] SwiftUI 학습 취소 버튼을 job 상태 업데이트에 연결
 - [x] macOS 배포 서명·notarization 자격 사전 점검 스크립트
 - [ ] 장시간 학습 및 모델 관리
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)

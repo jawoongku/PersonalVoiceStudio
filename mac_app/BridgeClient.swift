@@ -70,4 +70,16 @@ enum BridgeClient {
         process.waitUntilExit()
         guard process.terminationStatus == 0 else { throw NSError(domain: "PersonalVoiceStudio", code: Int(process.terminationStatus)) }
     }
+
+    static func cancelJob(job: String, workingDirectory: String) throws {
+        let process = Process()
+        let python = ProcessInfo.processInfo.environment["PVS_PYTHON"] ?? "/usr/bin/env"
+        process.executableURL = URL(fileURLWithPath: python)
+        let args = ["-m", "mac_voice", "job-update", "--job", job, "--status", "cancelled"]
+        process.arguments = python == "/usr/bin/env" ? ["python3"] + args : args
+        process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else { throw NSError(domain: "PersonalVoiceStudio", code: Int(process.terminationStatus)) }
+    }
 }

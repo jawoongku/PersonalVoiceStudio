@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var ttsText = ""
     @State private var ttsOutput: URL?
     @State private var isSynthesizing = false
+    @State private var isCancelling = false
     @State private var selectedVoicePath: String?
     @State private var ttsDevice = "cpu"
     @StateObject private var recorder = Recorder()
@@ -21,6 +22,20 @@ struct ContentView: View {
             Text("Personal Voice Studio").font(.title)
             if let snapshot {
                 Text("작업 상태: \(snapshot.job.status)")
+                if snapshot.job.status == "running" {
+                    Button(isCancelling ? "취소 요청 중..." : "학습 취소") {
+                        isCancelling = true
+                        DispatchQueue.global(qos: .utility).async {
+                            do {
+                                try BridgeClient.cancelJob(job: jobPath, workingDirectory: projectDirectory)
+                                DispatchQueue.main.async { isCancelling = false; refresh() }
+                            } catch {
+                                DispatchQueue.main.async { errorMessage = "취소 오류: \(error.localizedDescription)"; isCancelling = false }
+                            }
+                        }
+                    }
+                    .disabled(isCancelling)
+                }
                 HStack(alignment: .top) {
                     Image(systemName: snapshot.mps.tensor_probe ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(snapshot.mps.tensor_probe ? .green : .orange)
