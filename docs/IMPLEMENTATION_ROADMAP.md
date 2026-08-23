@@ -59,7 +59,8 @@
 - [x] Python engine subprocess/API bridge (job/bridge-status 기반)
 - [x] microphone 권한 요청 흐름
 - [x] macOS microphone usage description manifest
-- [ ] `.app` 패키징
+- [x] `.app` 패키징 (unsigned bundle 생성)
+- [ ] Developer ID 서명·notarization
 - [x] `.app` 번들 생성 스크립트 (release build + Info.plist)
 
 ## Phase 5 — 품질 개선
