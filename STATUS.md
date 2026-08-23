@@ -113,6 +113,7 @@
 - [x] Added Makefile notarization target with the existing profile guard.
 - [x] Synchronized roadmap: unsigned `.app` packaging is complete; Developer ID signing/notarization remains pending.
 - [x] SwiftUI shell accepts `PVS_PROJECT_DIR` for reliable bridge paths when launched from an `.app` bundle.
+- [x] SwiftUI bridge accepts `PVS_PYTHON` to select the Python/Conda runtime.
 
 ## In progress
 

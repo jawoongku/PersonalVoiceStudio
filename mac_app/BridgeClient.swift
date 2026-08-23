@@ -25,8 +25,11 @@ struct BridgeSnapshot: Codable {
 enum BridgeClient {
     static func fetch(job: String, voices: String, workingDirectory: String) throws -> BridgeSnapshot {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["python3", "-m", "mac_voice", "bridge-status", "--job", job, "--voices", voices]
+        let python = ProcessInfo.processInfo.environment["PVS_PYTHON"] ?? "/usr/bin/env"
+        process.executableURL = URL(fileURLWithPath: python)
+        process.arguments = python == "/usr/bin/env"
+            ? ["python3", "-m", "mac_voice", "bridge-status", "--job", job, "--voices", voices]
+            : ["-m", "mac_voice", "bridge-status", "--job", job, "--voices", voices]
         process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
         let pipe = Pipe()
         process.standardOutput = pipe
