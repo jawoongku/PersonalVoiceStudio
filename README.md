@@ -13,6 +13,7 @@ scripts/verify_all.sh
 ```
 
 동일한 작업은 `make verify`, `make app`, `make ui`로도 실행할 수 있습니다.
+배포 인증은 `NOTARY_PROFILE=... make notarize`로 실행합니다.
 
 ## 현재 상태
 

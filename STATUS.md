@@ -110,6 +110,7 @@
 - [x] Added GitHub Actions CI for Python unit tests and macOS Swift release build.
 - [x] Added `scripts/verify_all.sh` to run both local checks from the correct project directories.
 - [x] Added Makefile shortcuts for verification, app bundling, and UI launch.
+- [x] Added Makefile notarization target with the existing profile guard.
 
 ## In progress
 

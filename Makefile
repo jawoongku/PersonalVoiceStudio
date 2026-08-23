@@ -1,4 +1,4 @@
-.PHONY: verify app ui
+.PHONY: verify app ui notarize
 
 verify:
 	scripts/verify_all.sh
@@ -8,3 +8,6 @@ app:
 
 ui:
 	conda run -n cosyvoice python -m mac_voice ui
+
+notarize:
+	scripts/notarize_macos_app.sh
