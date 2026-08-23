@@ -61,7 +61,7 @@
 
 ## Phase 5 — 품질 개선
 
-- [ ] 적응형 문장 추천
+- [x] dataset transcript 기반 적응형 문장 추천
 - [x] ASR transcript 비교 기반 및 선택적 Whisper 연결
 - [ ] 화자 유사도 평가
 - [ ] MPS 호환 runtime

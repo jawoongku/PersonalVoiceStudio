@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, cancel_job_for_ui, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, narrate_for_ui, prepare_dataset_for_ui, read_job_log_for_ui, register_recording, start_training_job_for_ui, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, cancel_job_for_ui, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, narrate_for_ui, prepare_dataset_for_ui, read_job_log_for_ui, register_recording, recommend_from_dataset, recommend_next_sentence, start_training_job_for_ui, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -67,6 +67,13 @@ class GradioPrototypeTests(unittest.TestCase):
 
     def test_job_log_reports_missing_file(self):
         self.assertIn("로그 파일을 찾을 수 없습니다", read_job_log_for_ui("/tmp/missing-job.json"))
+
+    def test_recommends_unused_sentence_first(self):
+        self.assertEqual(recommend_next_sentence([RECOMMENDED_SENTENCES[0]]), RECOMMENDED_SENTENCES[1])
+        self.assertEqual(recommend_next_sentence(RECOMMENDED_SENTENCES), RECOMMENDED_SENTENCES[0])
+
+    def test_recommend_from_missing_dataset_is_safe(self):
+        self.assertEqual(recommend_from_dataset("/tmp/missing-dataset"), RECOMMENDED_SENTENCES[0])
 
     def test_recording_inspection_requires_transcript(self):
         self.assertIn("transcript", inspect_recording("/tmp/missing.wav", ""))

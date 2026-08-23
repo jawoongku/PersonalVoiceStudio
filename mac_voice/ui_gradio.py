@@ -34,6 +34,26 @@ RECOMMENDED_SENTENCES = [
 ]
 
 
+def recommend_next_sentence(used_texts: list[str] | set[str] | tuple[str, ...] = ()) -> str:
+    used = {"".join(text.split()) for text in used_texts}
+    for sentence in RECOMMENDED_SENTENCES:
+        if "".join(sentence.split()) not in used:
+            return sentence
+    return RECOMMENDED_SENTENCES[0]
+
+
+def recommend_from_dataset(dataset_root: str) -> str:
+    transcript_path = Path(dataset_root).expanduser() / "transcripts.csv"
+    if not transcript_path.is_file():
+        return RECOMMENDED_SENTENCES[0]
+    try:
+        with transcript_path.open(newline="", encoding="utf-8-sig") as handle:
+            used = [(row.get("text") or "") for row in csv.DictReader(handle)]
+    except (OSError, UnicodeError, csv.Error):
+        used = []
+    return recommend_next_sentence(used)
+
+
 def compare_transcripts(expected: str, recognized: str) -> str:
     expected_norm = "".join(expected.split()).lower()
     recognized_norm = "".join(recognized.split()).lower()
@@ -259,6 +279,7 @@ def build_demo():
     with gr.Blocks(title="Personal Voice Studio") as demo:
         gr.Markdown("# Personal Voice Studio\n문장을 읽고 녹음한 뒤 학습 가능 여부를 확인합니다.")
         sentence = gr.Dropdown(RECOMMENDED_SENTENCES, value=RECOMMENDED_SENTENCES[0], label="권장 문장")
+        dataset_root = gr.Textbox(label="데이터셋 경로", value="data/my_voice")
         # Gradio 3.x (required by matcha-tts) uses ``source`` while newer
         # releases use ``sources``. Keep the prototype compatible with both.
         audio_kwargs = {"type": "filepath", "label": "음성 녹음"}
@@ -271,14 +292,15 @@ def build_demo():
             gr.Markdown("마이크 또는 업로드 중 하나를 선택해 사용하세요.")
         transcript = gr.Textbox(label="Transcript", value=RECOMMENDED_SENTENCES[0])
         recognized = gr.Textbox(label="ASR 인식 문장 (선택)")
+        next_sentence = gr.Button("다음 문장 추천")
         asr_model = gr.Dropdown(["tiny", "base"], value="tiny", label="ASR 모델")
         asr = gr.Button("ASR 자동 인식")
         inspect = gr.Button("품질 검사")
         report = gr.Textbox(label="검사 결과", lines=5)
-        dataset_root = gr.Textbox(label="데이터셋 경로", value="data/my_voice")
         save = gr.Button("검사 통과 파일을 데이터셋에 저장")
         save_report = gr.Textbox(label="저장 결과", lines=6)
         sentence.change(lambda value: value, inputs=sentence, outputs=transcript)
+        next_sentence.click(lambda root: (recommend_from_dataset(root), recommend_from_dataset(root)), inputs=dataset_root, outputs=[sentence, transcript])
         if multi_source_audio:
             inspect.click(inspect_recording, inputs=[audio, transcript, recognized], outputs=report)
         else:

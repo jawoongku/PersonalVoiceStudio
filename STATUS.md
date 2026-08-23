@@ -92,6 +92,7 @@
 - [x] Job cancellation now sends a best-effort SIGTERM to the recorded running PID before marking cancelled.
 - [x] `job-status` now reports whether a recorded PID is alive.
 - [x] Added `job-status --json` for machine-readable UI/SwiftUI bridge consumption.
+- [x] Added dataset-aware next-sentence recommendation to the recording UI; 57 tests pass.
 
 ## In progress
 
