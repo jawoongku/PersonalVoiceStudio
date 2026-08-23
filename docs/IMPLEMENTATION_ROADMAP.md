@@ -64,6 +64,7 @@
 - [x] `.app` 패키징 (unsigned bundle 생성)
 - [ ] Developer ID 서명·notarization
 - [x] `.app` 번들 생성 스크립트 (release build + Info.plist)
+- [x] 배포 패키지 zip·SHA-256 생성 스크립트
 
 ## Phase 5 — 품질 개선
 

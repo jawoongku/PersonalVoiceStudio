@@ -166,6 +166,7 @@
 - [x] SwiftUI bridge now selects CPU or MPS Voice Package synthesis via `PVS_TTS_DEVICE` (CPU remains the default).
 - [x] SwiftUI now exposes a CPU/MPS segmented TTS selector and disables MPS when the bridge tensor probe is not ready.
 - [x] Added release signing readiness check; current machine has Apple Development certificates but no Developer ID Application certificate or notarization profile.
+- [x] Added release packaging automation for app build, optional signing, zip archive, and SHA-256 checksum.
 - [x] Host Terminal user parquet MPS batch passed: utt `0002`, finite loss `3.8925516605`, 96 LoRA matches, non-zero gradients, and optimizer step.
 - [x] Host Terminal full user parquet MPS epoch passed: 8 train rows, 2 dev rows, final train loss `4.3410806656`, dev loss `4.5222234726`, adapter/checkpoint/state/metrics saved.
 - [x] Host Terminal MPS resume passed: reloaded step `8`, completed step `9` with loss `3.8594861031`, and wrote a new adapter/state pair.
