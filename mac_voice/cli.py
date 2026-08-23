@@ -61,6 +61,13 @@ def build_parser() -> argparse.ArgumentParser:
     resume_job.add_argument("--output", required=True)
     resume_job.add_argument("--job", required=True)
     resume_job.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    package_job = subparsers.add_parser("package-job", help="build a Voice Package from a completed run")
+    package_job.add_argument("--run", required=True)
+    package_job.add_argument("--name", required=True)
+    package_job.add_argument("--output", required=True)
+    package_job.add_argument("--base-model", required=True)
+    package_job.add_argument("--job", required=True)
+    package_job.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
     doctor = subparsers.add_parser("doctor", help="inspect the local Mac/CosyVoice environment")
     doctor.add_argument("--model-dir", default=None, help="CosyVoice3 model directory")
     doctor.add_argument("--upstream-root", default=None, help="CosyVoice checkout directory")
@@ -244,6 +251,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[ERROR] {exc}")
             return 1
         print(f"[OK] resume job completed: output={args.output}")
+        return 0
+    if args.command == "package-job":
+        try:
+            update_job(args.job, "running")
+            destination = build_voice_package(args.run, args.name, args.output, base_model=args.base_model, upstream_root=args.upstream_root)
+            update_job(args.job, "completed", package=str(destination))
+        except (OSError, RuntimeError, ValueError) as exc:
+            try:
+                update_job(args.job, "failed", error=str(exc))
+            except (OSError, ValueError):
+                pass
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] Voice Package created: {destination}")
         return 0
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)

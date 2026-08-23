@@ -81,6 +81,7 @@
 - [x] Ran the job command on the real user parquet for 1 CPU step: train_loss=3.892549, dev_loss=3.897105; fixed job step reporting (`steps` fallback).
 - [x] Added and ran `parquet-resume-job` on the generated adapter/state, confirming a fresh-model resume step completes.
 - [x] Enhanced `job-status` to show train/dev loss and checkpoint/state paths when available.
+- [x] Added `package-job` to build and record a Voice Package from a run with job state transitions.
 
 ## In progress
 

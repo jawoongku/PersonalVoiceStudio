@@ -34,6 +34,7 @@
 
 - [x] Python job 상태 파일 및 조회 CLI 기반 (`job.json`, `job-status`)
 - [x] Voice Package 목록·유효성 검증 CLI (`list-voices`)
+- [x] 학습 run에서 Voice Package 생성과 job 상태 연동 (`package-job`)
 - [ ] 실제 사용자 dataset 학습 UI
 - [x] loss/로그 표시
 - [x] 학습 취소 상태 표시 UI 및 training loop 협력적 취소 지점

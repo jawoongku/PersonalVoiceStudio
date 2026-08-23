@@ -89,6 +89,17 @@ python -m mac_voice parquet-resume-job \
 python -m mac_voice list-voices --root artifacts/voices
 ```
 
+학습 run에서 Voice Package를 만들려면:
+
+```bash
+python -m mac_voice package-job \
+  --run artifacts/runs/my_voice \
+  --name my_voice \
+  --output artifacts/voices/my_voice \
+  --base-model "$COSYVOICE_MODEL_DIR" \
+  --job artifacts/runs/package_job/job.json
+```
+
 ## 환경 진단
 
 ```bash
