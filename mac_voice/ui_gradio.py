@@ -11,6 +11,7 @@ from pathlib import Path
 from .dataset import _pcm_stats
 from .catalog import list_voice_packages
 from .synth import run_synth
+from .history import append_tts_history, read_tts_history
 
 RECOMMENDED_SENTENCES = [
     "오늘 아침에는 평소보다 조금 일찍 일어났습니다.",
@@ -87,6 +88,7 @@ def synthesize_for_ui(voice_root: str, voice_name: str, text: str, model_dir: st
         result = run_synth(voice_path, text.strip(), output, model_dir=model_dir)
     except (OSError, RuntimeError, ValueError) as exc:
         return f"합성할 수 없습니다: {exc}", None
+    append_tts_history("artifacts/tts_history.jsonl", voice=voice_name, text=text.strip(), output=str(result))
     return f"합성 완료: {result}", str(result)
 
 
@@ -127,6 +129,9 @@ def build_demo():
         synth_report = gr.Textbox(label="TTS 결과", lines=3)
         synth_audio = gr.Audio(label="생성된 음성", type="filepath", interactive=False)
         synth.click(synthesize_for_ui, inputs=[voice_root, voice_name, tts_text, model_dir, output], outputs=[synth_report, synth_audio])
+        history = gr.Textbox(label="최근 생성 기록", lines=6)
+        refresh_history = gr.Button("히스토리 새로고침")
+        refresh_history.click(lambda: "\n".join(f"{item.get('created_at', '')} | {item.get('voice', '')} | {item.get('text', '')}" for item in read_tts_history("artifacts/tts_history.jsonl")), outputs=history)
     return demo
 
 
