@@ -41,7 +41,7 @@ python -m pip install -r requirements-ui.txt
 python -m mac_voice ui
 ```
 
-현재 UI는 녹음 품질 prototype이며, ASR 발음 일치 판정과 SwiftUI macOS 앱은 후속 단계입니다.
+현재 Gradio UI와 SwiftUI macOS shell, Python bridge, AVAudioEngine 녹음까지 구현되어 있습니다. SwiftUI 앱 서명·notarization과 화자 유사도 평가·MPS runtime은 후속 단계입니다.
 품질 검사를 통과한 녹음은 UI에서 `data/my_voice/raw/`와 `transcripts.csv`에 자동 등록할 수 있습니다.
 같은 화면의 Voice Package TTS 영역에서 패키지를 선택해 음성 생성을 요청할 수 있습니다. 모델 경로와 CosyVoice 런타임이 준비되지 않은 경우 원인이 결과 창에 표시됩니다.
 성공한 생성은 `artifacts/tts_history.jsonl`에 기록되며 UI에서 최근 기록을 새로고침할 수 있습니다.
