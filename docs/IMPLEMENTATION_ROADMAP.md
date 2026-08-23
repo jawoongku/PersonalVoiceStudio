@@ -71,7 +71,7 @@
 - [x] ASR transcript 비교 기반 및 선택적 Whisper 연결
 - [x] 실제 화자 유사도 평가(CAMPPlus 임베딩·cosine 기준)
 - [x] 화자 임베딩 cosine similarity 계산 계약 (임베딩 추출기 연결은 후속)
-- [ ] MPS 호환 runtime
+- [x] MPS 호환 runtime 확보 및 호스트 검증(PyTorch 2.13.0, macOS 26.5.2)
 - [ ] 장시간 학습 및 모델 관리
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)
 - [x] 비파괴적 학습 run 보관 후보 계산 기반

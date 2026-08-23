@@ -144,12 +144,13 @@
 
 ## In progress
 
-- [ ] Establish an MPS-capable Python environment.
+- [x] Established and host-verified an MPS-capable Python environment (`pvs-mps`, PyTorch 2.13.0, torchaudio 2.11.0).
 - [x] Added a non-mutating MPS environment preflight; the current PyTorch/macOS mismatch is now explicitly classified as `os-runtime-mismatch`.
 - [x] MPS training device resolution now surfaces the runtime diagnosis and next action instead of a generic failure.
 - [x] Added an isolated, non-destructive MPS candidate environment creator with dry-run mode.
 - [x] Created the isolated `pvs-mps` candidate and tested PyTorch 2.5.1 and 2.7.1; repeated fresh-process probes still report `os-runtime-mismatch`, so the candidate is not accepted as MPS-ready.
 - [x] Tested latest PyTorch 2.13.0/torchaudio 2.11.0 in `pvs-mps`; this Codex execution context still reports `_mps_is_available=False`. A normal Terminal host probe remains required because PyTorch reports different MPS behavior inside Codex on the same host.
+- [x] Host Terminal probe passed: MPS tensor creation plus forward/backward/optimizer smoke succeeded on macOS 26.5.2.
 - [x] Exposed MPS readiness, tensor probe, and action guidance through `bridge-status` and the SwiftUI shell; 67 tests pass.
 - [x] Locate/provision the core `Fun-CosyVoice3-0.5B` model assets without duplicating an existing copy.
 - [ ] Implement and verify baseline MPS inference.
