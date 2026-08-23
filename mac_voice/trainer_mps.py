@@ -31,7 +31,15 @@ def resolve_device(requested: str = "mps"):
     torch = _torch()
     if requested == "mps":
         if not torch.backends.mps.is_available():
-            raise RuntimeError("MPS is unavailable; refusing to silently switch training to another device")
+            from .mps_runtime import probe
+
+            report = probe()
+            detail = report.get("error") or report.get("status") or "unavailable"
+            action = report.get("action") or "run mps-doctor"
+            raise RuntimeError(
+                f"MPS is unavailable ({detail}); refusing to silently switch training to another device. "
+                f"Action: {action}"
+            )
         return torch.device("mps")
     if requested == "cpu":
         return torch.device("cpu")

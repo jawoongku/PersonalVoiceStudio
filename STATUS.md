@@ -145,6 +145,7 @@
 
 - [ ] Establish an MPS-capable Python environment.
 - [x] Added a non-mutating MPS environment preflight; the current PyTorch/macOS mismatch is now explicitly classified as `os-runtime-mismatch`.
+- [x] MPS training device resolution now surfaces the runtime diagnosis and next action instead of a generic failure.
 - [x] Locate/provision the core `Fun-CosyVoice3-0.5B` model assets without duplicating an existing copy.
 - [ ] Implement and verify baseline MPS inference.
 - [ ] Verify baseline with a real local CosyVoice3 model and non-silent WAV.
