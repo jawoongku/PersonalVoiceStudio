@@ -39,6 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
     job_status.add_argument("--json", action="store_true", dest="as_json")
     voices = subparsers.add_parser("list-voices", help="list and validate local Voice Packages")
     voices.add_argument("--root", default="artifacts/voices")
+    voices.add_argument("--json", action="store_true", dest="as_json")
     job_create = subparsers.add_parser("job-create", help="create a queued training job metadata file")
     job_create.add_argument("--output", required=True, help="job output directory")
     job_create.add_argument("--command", dest="job_command", default="train")
@@ -207,7 +208,11 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"[INFO] {key}: {metrics[key]}")
         return 0
     if args.command == "list-voices":
-        for voice in list_voice_packages(args.root):
+        voice_rows = list_voice_packages(args.root)
+        if args.as_json:
+            print(json.dumps(voice_rows, ensure_ascii=False))
+            return 0
+        for voice in voice_rows:
             status = "valid" if voice["valid"] else "invalid"
             print(f"[{status}] {voice['name']} ({voice['path']})")
             if voice.get("language"):

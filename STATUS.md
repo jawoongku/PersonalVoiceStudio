@@ -94,6 +94,7 @@
 - [x] Added `job-status --json` for machine-readable UI/SwiftUI bridge consumption.
 - [x] Added dataset-aware next-sentence recommendation to the recording UI; 57 tests pass.
 - [x] Comparison reports now explicitly distinguish audio statistics from unavailable speaker-similarity scoring.
+- [x] Added `list-voices --json` for machine-readable Voice Package catalogs.
 
 ## In progress
 

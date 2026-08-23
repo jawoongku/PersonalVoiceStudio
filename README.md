@@ -90,6 +90,7 @@ python -m mac_voice parquet-resume-job \
 ```bash
 python -m mac_voice list-voices --root artifacts/voices
 ```
+자동화에서는 `python -m mac_voice list-voices --root artifacts/voices --json`을 사용할 수 있습니다.
 
 학습 run에서 Voice Package를 만들려면:
 
