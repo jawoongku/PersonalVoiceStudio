@@ -135,6 +135,13 @@ python -m mac_voice parquet-resume-job \
 python -m mac_voice list-voices --root artifacts/voices
 ```
 학습 run과 checkpoint 목록은 `python -m mac_voice list-runs --root artifacts/runs`로 확인합니다.
+
+보관 후보만 확인하려면 다음 명령을 사용합니다. 이 명령은 파일을 삭제하지 않습니다.
+
+```bash
+python -m mac_voice retention-plan --root artifacts/runs --keep 3
+python -m mac_voice retention-plan --root artifacts/runs --keep 3 --json
+```
 자동화에서는 `python -m mac_voice list-voices --root artifacts/voices --json`을 사용할 수 있습니다.
 SwiftUI 브리지는 `python -m mac_voice bridge-status --job <job.json> --voices artifacts/voices`로 통합 상태를 읽을 수 있습니다.
 임베딩 벡터 비교는 `python -m mac_voice similarity --left 1,2 --right 1,2`로 실행할 수 있습니다.
