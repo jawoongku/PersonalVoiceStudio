@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, inspect_recording, job_status_for_ui, prepare_dataset_for_ui, register_recording, synthesize_for_ui, training_preflight_for_ui, validate_dataset_for_ui
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, compare_transcripts, inspect_recording, job_status_for_ui, prepare_dataset_for_ui, register_recording, synthesize_for_ui, training_preflight_for_ui, validate_dataset_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -21,6 +21,9 @@ class GradioPrototypeTests(unittest.TestCase):
                 handle.writeframes((1000).to_bytes(2, "little", signed=True) * 24000)
             report = inspect_recording(path, "테스트 문장입니다.")
             self.assertIn("판정: 사용 가능", report)
+
+    def test_transcript_similarity(self):
+        self.assertIn("100.0%", compare_transcripts("안녕하세요", " 안녕 하세요 "))
 
     def test_recording_inspection_requires_transcript(self):
         self.assertIn("transcript", inspect_recording("/tmp/missing.wav", ""))

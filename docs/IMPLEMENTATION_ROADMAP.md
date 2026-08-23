@@ -19,6 +19,7 @@
 - [x] 학습 작업 메타데이터 생성 CLI (`job-create`)
 - [x] 학습 작업 상태 갱신 CLI (`job-update`)
 - [x] UI 학습 metrics 요약 조회
+- [x] 선택적 ASR 문장 입력과 transcript 유사도 비교 기반
 - [x] WAV 품질 gate (길이·음량·clipping·무음; ASR 일치도는 후속)
 - [x] Gradio recording 화면 골격 및 runtime 생성 검증 (Gradio 3.43.2)
 

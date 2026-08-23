@@ -67,6 +67,7 @@
 - [x] Added `job-create` CLI for queued training metadata; verified create/status lifecycle.
 - [x] Added `job-update` CLI for status, step, and error transitions.
 - [x] Added UI metrics viewer for recent train/validation loss and learning rate; 44 tests pass.
+- [x] Added optional recognized-text comparison with normalized transcript similarity; 45 tests pass. Full ASR inference remains a later integration.
 
 ## In progress
 

@@ -6,6 +6,7 @@ import wave
 import inspect as pyinspect
 import csv
 import shutil
+import difflib
 from pathlib import Path
 
 from .dataset import _pcm_stats, prepare_dataset, render_validation, validate_dataset
@@ -27,7 +28,17 @@ RECOMMENDED_SENTENCES = [
 ]
 
 
-def inspect_recording(audio_path: str | Path | None, transcript: str) -> str:
+def compare_transcripts(expected: str, recognized: str) -> str:
+    expected_norm = "".join(expected.split()).lower()
+    recognized_norm = "".join(recognized.split()).lower()
+    if not expected_norm or not recognized_norm:
+        return "발음 비교: 인식 문장이 입력되지 않았습니다."
+    score = difflib.SequenceMatcher(None, expected_norm, recognized_norm).ratio()
+    verdict = "높음" if score >= 0.9 else "검토 필요"
+    return f"발음 비교 유사도: {score:.1%} ({verdict})"
+
+
+def inspect_recording(audio_path: str | Path | None, transcript: str, recognized: str = "") -> str:
     if not audio_path:
         return "녹음 파일을 먼저 선택하거나 녹음해 주세요."
     if not transcript.strip():
@@ -53,10 +64,11 @@ def inspect_recording(audio_path: str | Path | None, transcript: str) -> str:
     if silence > 0.8:
         issues.append("무음 구간이 많습니다")
     status = "사용 가능" if not issues else "재녹음 검토"
+    pronunciation = compare_transcripts(transcript, recognized) if recognized.strip() else "발음 비교: ASR 결과가 없어 생략했습니다."
     return (f"판정: {status}\n길이: {duration:.2f}초 | {sample_rate}Hz | {channels}ch | "
             f"RMS: {rms:.4f} | peak: {peak:.4f}\n"
             f"문제: {', '.join(issues) if issues else '없음'}\n"
-            "문장 발음 일치 여부는 녹음 재생 후 확인해 주세요.")
+            f"{pronunciation}")
 
 
 def register_recording(dataset_root: str | Path, audio_path: str | Path | None, transcript: str) -> str:
@@ -167,13 +179,14 @@ def build_demo():
             audio = gr.Audio(source="microphone", **audio_kwargs)
             gr.Markdown("Gradio 3.x에서는 마이크 입력을 사용하세요. 업로드 파일은 다음 단계에서 통합합니다.")
         transcript = gr.Textbox(label="Transcript", value=RECOMMENDED_SENTENCES[0])
+        recognized = gr.Textbox(label="ASR 인식 문장 (선택)")
         inspect = gr.Button("품질 검사")
         report = gr.Textbox(label="검사 결과", lines=5)
         dataset_root = gr.Textbox(label="데이터셋 경로", value="data/my_voice")
         save = gr.Button("검사 통과 파일을 데이터셋에 저장")
         save_report = gr.Textbox(label="저장 결과", lines=6)
         sentence.change(lambda value: value, inputs=sentence, outputs=transcript)
-        inspect.click(inspect_recording, inputs=[audio, transcript], outputs=report)
+        inspect.click(inspect_recording, inputs=[audio, transcript, recognized], outputs=report)
         save.click(register_recording, inputs=[dataset_root, audio, transcript], outputs=save_report)
         dataset_check = gr.Button("데이터셋 전체 검증")
         dataset_report = gr.Textbox(label="데이터셋 검증 결과", lines=8)
