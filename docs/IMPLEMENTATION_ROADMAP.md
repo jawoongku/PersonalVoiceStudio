@@ -34,7 +34,7 @@
 - [x] Voice Package 목록·유효성 검증 CLI (`list-voices`)
 - [ ] 실제 사용자 dataset 학습 UI
 - [x] loss/로그 표시
-- [ ] 학습 취소/resume UI
+- [x] 학습 취소 상태 표시 UI (실행기 실제 중단 연동은 후속)
 - [x] Voice Package 목록과 검증
 
 ## Phase 3 — TTS MVP

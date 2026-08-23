@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, narrate_for_ui, prepare_dataset_for_ui, register_recording, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, cancel_job_for_ui, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, narrate_for_ui, prepare_dataset_for_ui, register_recording, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -51,6 +51,12 @@ class GradioPrototypeTests(unittest.TestCase):
     def test_narrate_empty_text_accepts_custom_chunk_size(self):
         report, _ = narrate_for_ui("artifacts/voices", "demo", "", "missing", "out.wav", 120)
         self.assertIn("긴 텍스트를 입력", report)
+
+    def test_cancel_job_updates_state(self):
+        with tempfile.TemporaryDirectory() as temp:
+            from mac_voice.jobs import create_job
+            path = create_job(Path(temp) / "run", command="train", config="training.yaml")
+            self.assertIn("cancelled", cancel_job_for_ui(str(path)))
 
     def test_recording_inspection_requires_transcript(self):
         self.assertIn("transcript", inspect_recording("/tmp/missing.wav", ""))

@@ -182,6 +182,15 @@ def job_status_for_ui(job_path: str) -> str:
     return "\n".join(lines)
 
 
+def cancel_job_for_ui(job_path: str) -> str:
+    try:
+        from .jobs import update_job
+        job = update_job(job_path, "cancelled")
+    except (OSError, ValueError) as exc:
+        return f"작업을 취소할 수 없습니다: {exc}"
+    return f"작업 상태가 cancelled로 변경되었습니다.\nupdated_at: {job['updated_at']}"
+
+
 def narrate_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, output: str, max_chars: int = 180) -> tuple[str, str | None]:
     if not text.strip():
         return "긴 텍스트를 입력해 주세요.", None
@@ -260,6 +269,8 @@ def build_demo():
         job_refresh = gr.Button("작업 상태 새로고침")
         job_report = gr.Textbox(label="작업 상태", lines=6)
         job_refresh.click(job_status_for_ui, inputs=job_path, outputs=job_report)
+        job_cancel = gr.Button("작업 취소 표시")
+        job_cancel.click(cancel_job_for_ui, inputs=job_path, outputs=job_report)
         gr.Markdown("## 학습 metrics")
         metrics_path = gr.Textbox(label="metrics.jsonl 경로", value="artifacts/runs/my_voice/metrics.jsonl")
         metrics_refresh = gr.Button("metrics 새로고침")
