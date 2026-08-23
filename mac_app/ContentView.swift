@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var sentenceIndex = 0
     @State private var recordingValidation: String?
     @State private var recordings: [URL] = []
+    @State private var selectedRecordings: Set<URL> = []
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
 
@@ -214,6 +215,14 @@ struct ContentView: View {
                         LazyVStack(alignment: .leading, spacing: 8) {
                             ForEach(recordings, id: \.self) { recording in
                                 HStack {
+                                    Toggle("", isOn: Binding(
+                                        get: { selectedRecordings.contains(recording) },
+                                        set: { checked in
+                                            if checked { selectedRecordings.insert(recording) }
+                                            else { selectedRecordings.remove(recording) }
+                                        }
+                                    ))
+                                    .labelsHidden()
                                     Image(systemName: "waveform")
                                         .foregroundStyle(Color.accentColor)
                                     VStack(alignment: .leading) {
@@ -225,10 +234,18 @@ struct ContentView: View {
                                     Spacer()
                                     Button("재생") { togglePlayback(recording) }
                                     Button("Finder") { NSWorkspace.shared.activateFileViewerSelecting([recording]) }
+                                    Button("삭제", role: .destructive) { deleteRecording(recording) }
                                 }
                                 if recording != recordings.last { Divider() }
                             }
                         }
+                    }
+                    HStack {
+                        Text("선택 (selectedRecordings.count)개")
+                            .font(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("선택 파일로 학습 데이터 만들기", action: createSelectedDataset)
+                            .disabled(selectedRecordings.isEmpty)
                     }
                 }
             }
@@ -513,6 +530,43 @@ struct ContentView: View {
         recordings = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil))?
             .filter { $0.pathExtension.lowercased() == "wav" }
             .sorted { $0.lastPathComponent < $1.lastPathComponent } ?? []
+        selectedRecordings = selectedRecordings.intersection(Set(recordings))
+    }
+
+    private func deleteRecording(_ recording: URL) {
+        do {
+            try FileManager.default.removeItem(at: recording)
+            selectedRecordings.remove(recording)
+            refreshRecordings()
+            recordingValidation = "삭제 완료: \(recording.lastPathComponent)"
+        } catch {
+            errorMessage = "녹음 파일을 삭제하지 못했습니다. \(error.localizedDescription)"
+        }
+    }
+
+    private func createSelectedDataset() {
+        let root = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice_selected", isDirectory: true)
+        let raw = root.appendingPathComponent("raw", isDirectory: true)
+        let transcript = root.appendingPathComponent("transcripts.csv")
+        do {
+            try FileManager.default.createDirectory(at: raw, withIntermediateDirectories: true)
+            let sourceTranscript = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice/transcripts.csv")
+            let sourceLines = (try? String(contentsOf: sourceTranscript, encoding: .utf8).split(separator: "\n").map(String.init)) ?? []
+            var output = "filename,text\n"
+            for source in selectedRecordings.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+                let destination = raw.appendingPathComponent(source.lastPathComponent)
+                if FileManager.default.fileExists(atPath: destination.path) { try FileManager.default.removeItem(at: destination) }
+                try FileManager.default.copyItem(at: source, to: destination)
+                let prefix = "\"\(source.lastPathComponent)\","
+                if let line = sourceLines.first(where: { $0.hasPrefix(prefix) }) {
+                    output += line + "\n"
+                }
+            }
+            try output.write(to: transcript, atomically: true, encoding: .utf8)
+            recordingValidation = "선택 파일 \(selectedRecordings.count)개로 학습 데이터 생성 완료: \(root.path)"
+        } catch {
+            errorMessage = "선택 파일 학습 데이터 생성에 실패했습니다. \(error.localizedDescription)"
+        }
     }
 
     private func recordingDuration(_ url: URL) -> String {
