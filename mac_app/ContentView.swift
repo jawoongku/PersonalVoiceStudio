@@ -7,7 +7,7 @@ struct ContentView: View {
 
     @State private var snapshot: BridgeSnapshot?
     @State private var errorMessage: String?
-    @State private var selectedSection: WorkspaceSection? = .dashboard
+    @State private var selectedSection: WorkspaceSection? = .recording
     @State private var ttsText = ""
     @State private var ttsOutput: URL?
     @State private var isSynthesizing = false
@@ -44,14 +44,12 @@ struct ContentView: View {
             .listStyle(.sidebar)
         } detail: {
             Group {
-                switch selectedSection ?? .dashboard {
-                case .dashboard: dashboard
+                switch selectedSection ?? .recording {
                 case .recording: recordingWorkspace
-                case .training: trainingWorkspace
                 case .tts: ttsWorkspace
                 }
             }
-            .navigationTitle((selectedSection ?? .dashboard).title)
+            .navigationTitle((selectedSection ?? .recording).title)
             .toolbar { toolbarContent }
         }
         .task { refresh(); refreshRecordings(); refreshModels() }
@@ -81,15 +79,6 @@ struct ContentView: View {
             .keyboardShortcut("r", modifiers: [.command])
         }
 
-        if snapshot?.job.status == "running" {
-            ToolbarItem(placement: .primaryAction) {
-                Button(role: .destructive, action: cancelTraining) {
-                    Label(isCancelling ? "취소 요청 중" : "학습 취소", systemImage: "stop.fill")
-                }
-                .disabled(isCancelling)
-                .help("실행 중인 학습 취소")
-            }
-        }
     }
 
     private var dashboard: some View {
@@ -729,27 +718,21 @@ struct ContentView: View {
 }
 
 private enum WorkspaceSection: String, CaseIterable, Identifiable {
-    case dashboard
     case recording
-    case training
     case tts
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .dashboard: return "대시보드"
         case .recording: return "녹음"
-        case .training: return "학습"
         case .tts: return "TTS"
         }
     }
 
     var symbol: String {
         switch self {
-        case .dashboard: return "rectangle.3.group"
         case .recording: return "mic"
-        case .training: return "cpu"
         case .tts: return "waveform"
         }
     }
