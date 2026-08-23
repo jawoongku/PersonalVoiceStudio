@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from collections.abc import Callable
 
 from .baseline import _load_upstream
 from .checkpoint import load_adapter_checkpoint, save_adapter_checkpoint
@@ -111,6 +112,7 @@ def run_user_parquet_mps_train(
     *,
     rank: int = 2,
     alpha: int = 4,
+    progress: Callable[[int, dict[str, object]], None] | None = None,
 ) -> dict[str, object]:
     import torch
     from .checkpoint import save_adapter_checkpoint
@@ -145,6 +147,8 @@ def run_user_parquet_mps_train(
         optimizer.step()
         last_loss = float(loss.detach().cpu().item())
         metrics.log(step=step, train_loss=last_loss, learning_rate=1e-4)
+        if progress is not None:
+            progress(step, {"step": step, "train_loss": last_loss, "learning_rate": 1e-4})
     llm.eval()
     dev_losses = []
     with torch.no_grad():
@@ -156,6 +160,8 @@ def run_user_parquet_mps_train(
             dev_losses.append(float(dev_loss.detach().cpu().item()))
     dev_loss_value = sum(dev_losses) / len(dev_losses)
     metrics.log(step=len(train_rows), val_loss=dev_loss_value, learning_rate=1e-4)
+    if progress is not None:
+        progress(len(train_rows), {"step": len(train_rows), "val_loss": dev_loss_value, "learning_rate": 1e-4})
     checkpoint = save_adapter_checkpoint(llm, output_path, step=len(train_rows), epoch=0, val_loss=dev_loss_value, config={"device": "mps", "rank": rank, "alpha": alpha, "train_rows": len(train_rows)})
     state_path = save_training_state(output_path.with_suffix(".state.pt"), optimizer=optimizer, scheduler=None, step=len(train_rows), epoch=0, config={"device": "mps", "rank": rank, "alpha": alpha})
     return {"status": "ok", "device": str(device), "train_rows": len(train_rows), "dev_rows": len(dev_rows), "steps": len(train_rows), "train_loss": last_loss, "dev_loss": dev_loss_value, "checkpoint": str(checkpoint), "state": str(state_path), "metrics": str(output_path.with_suffix(".metrics.jsonl")), "matched_modules": len(matched), "trainable": stats.trainable}

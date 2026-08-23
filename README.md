@@ -151,7 +151,7 @@ python -m mac_voice artifact-manifest --root artifacts/voices/my_voice_mps_epoch
 python -m mac_voice artifact-verify --manifest artifacts/voices/my_voice_mps_epoch/artifact-manifest.json
 ```
 
-MPS 전체 학습을 `job.json`과 연결하려면 `PVS_MPS_JOB=/path/to/job.json scripts/host_mps_user_parquet_train.sh`로 실행합니다. 실행 중·완료·실패 상태와 metrics가 자동 기록됩니다.
+MPS 전체 학습을 `job.json`과 연결하려면 `PVS_MPS_JOB=/path/to/job.json scripts/host_mps_user_parquet_train.sh`로 실행합니다. 각 train/dev step의 step·loss·metrics가 실행 중에도 자동 기록됩니다.
 
 SwiftUI Voice Package TTS는 화면의 실행 장치 선택에서 CPU/MPS를 직접 선택할 수 있습니다. `PVS_TTS_DEVICE=mps`를 설정하면 MPS가 준비된 경우 초기 선택값으로 적용됩니다.
 자동화에서는 `python -m mac_voice list-voices --root artifacts/voices --json`을 사용할 수 있습니다.

@@ -464,7 +464,10 @@ def main(argv: list[str] | None = None) -> int:
         try:
             if args.job:
                 update_job(args.job, "running")
-            result = run_user_parquet_mps_train(args.train_data_list, args.dev_data_list, args.model_dir, args.output, args.upstream_root)
+            progress = None
+            if args.job:
+                progress = lambda step, metrics: update_job(args.job, "running", step=step, metrics=metrics)
+            result = run_user_parquet_mps_train(args.train_data_list, args.dev_data_list, args.model_dir, args.output, args.upstream_root, progress=progress)
         except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
             if args.job:
                 try:

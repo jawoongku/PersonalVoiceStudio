@@ -155,6 +155,7 @@
 - [x] Added `retention-plan` CLI/JSON output for non-destructive run retention review.
 - [x] Added SHA-256 artifact manifest creation and verification for retained runs and Voice Packages.
 - [x] Connected full MPS parquet training to optional `job.json` running/completed/failed status and metrics updates.
+- [x] MPS training now reports per-step progress and train/dev loss to `job.json` while running.
 - [x] Host Terminal MPS adapter synth passed: generated a 5.92-second WAV from `my_voice_mps_epoch`; CAMPPlus similarity `0.915502`.
 - [x] SwiftUI bridge now selects CPU or MPS Voice Package synthesis via `PVS_TTS_DEVICE` (CPU remains the default).
 - [x] SwiftUI now exposes a CPU/MPS segmented TTS selector and disables MPS when the bridge tensor probe is not ready.

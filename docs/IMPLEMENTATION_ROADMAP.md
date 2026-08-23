@@ -83,6 +83,7 @@
 - [x] 학습 run 보관 계획 CLI·JSON 조회 연결(비파괴)
 - [x] run·Voice Package SHA-256 artifact manifest 생성·검증
 - [x] MPS 전체 학습 명령의 job 상태·metrics 연동
+- [x] MPS 전체 학습 step별 job progress·loss 기록
 - [x] macOS 배포 서명·notarization 자격 사전 점검 스크립트
 - [ ] 장시간 학습 및 모델 관리
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)
