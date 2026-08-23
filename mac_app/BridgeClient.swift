@@ -64,7 +64,38 @@ enum BridgeClient {
         let important = lines.filter { $0.contains("[ERROR]") || $0.contains("[BLOCKED]") || $0.contains("Traceback") || $0.contains("RuntimeError") || $0.contains("ValueError") }
         let selected = important.isEmpty ? Array(lines.suffix(12)) : Array(important.suffix(8))
         let message = selected.isEmpty ? "Python bridge exited with status \(process.terminationStatus)" : selected.joined(separator: "\n")
+        persistFailure(process: process, detail: detail ?? message)
         return NSError(domain: "PersonalVoiceStudio", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: message])
+    }
+
+    private static func persistFailure(process: Process, detail: String) {
+        let root = (process.currentDirectoryURL ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath))
+            .appendingPathComponent("artifacts/logs/errors", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+            let formatter = ISO8601DateFormatter()
+            let stamp = formatter.string(from: Date()).replacingOccurrences(of: ":", with: "-")
+            let file = root.appendingPathComponent("error-\(stamp)-\(UUID().uuidString).log")
+            let command = process.arguments?.joined(separator: " ") ?? "unknown command"
+            let body = "timestamp=\(formatter.string(from: Date()))\nexit_status=\(process.terminationStatus)\ncommand=\(command)\n\n\(detail)\n"
+            try body.write(to: file, atomically: true, encoding: .utf8)
+            let index = root.appendingPathComponent("index.jsonl")
+            let object: [String: Any] = [
+                "timestamp": formatter.string(from: Date()),
+                "status": process.terminationStatus,
+                "file": file.path,
+                "command": command,
+            ]
+            let record = String(data: try JSONSerialization.data(withJSONObject: object), encoding: .utf8)! + "\n"
+            if FileManager.default.fileExists(atPath: index.path) {
+                let handle = try FileHandle(forWritingTo: index)
+                try handle.seekToEnd(); handle.write(Data(record.utf8)); try handle.close()
+            } else {
+                try record.write(to: index, atomically: true, encoding: .utf8)
+            }
+        } catch {
+            // Logging must never hide the original bridge error.
+        }
     }
 
     static func fetch(job: String, voices: String, workingDirectory: String) throws -> BridgeSnapshot {

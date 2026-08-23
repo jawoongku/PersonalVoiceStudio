@@ -188,6 +188,7 @@
 - [x] Run the generic loop against real CosyVoice3 parquet rows on host MPS (8 train/2 dev rows; checkpoint, state, and metrics verified).
 - [x] Host Terminal generic-loop MPS resume passed: restored the prior adapter/state at step `8` and completed step `9` with loss `3.857647657394409`.
 - [x] Connected the model-data button to end-to-end create-voice: prepare, feature/parquet extraction, host MPS LoRA training, checkpoint, Voice Package, and TTS catalog refresh; sample `pipeline_test` completed with 1 train/1 dev row.
+- [x] Persist every Python bridge failure as a timestamped individual log under `artifacts/logs/errors/` and append an `index.jsonl` record.
 - [x] Validate real generated parquet schema and feature columns.
 - [x] Install/provide an MPS-capable runtime and local model assets; host probe passes on `pvs-mps`.
 - [x] Verify `compare` with real MPS-trained adapter output; CAMPPlus similarity `0.919853` recorded.
