@@ -53,6 +53,7 @@
 - [x] Synth reads LoRA rank/alpha/dropout from adapter checkpoint metadata; rank-2 user package inference is now compatible.
 - [x] Added the first Gradio UI prototype: recommended sentence queue, microphone input, transcript field, and WAV quality report; 3 UI core tests pass.
 - [x] Verified the UI can construct a Gradio `Blocks` app in the `cosyvoice` environment with Gradio 3.43.2; pinned compatible UI dependencies in `requirements-ui.txt`.
+- [x] Added dataset registration from the UI: quality-approved recordings are numbered, copied to `raw/`, and appended to `transcripts.csv`; 32 tests pass.
 
 ## In progress
 

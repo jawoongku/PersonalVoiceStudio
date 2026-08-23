@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import wave
 import inspect as pyinspect
+import csv
+import shutil
 from pathlib import Path
 
 from .dataset import _pcm_stats
@@ -50,6 +52,31 @@ def inspect_recording(audio_path: str | Path | None, transcript: str) -> str:
             "문장 발음 일치 여부는 녹음 재생 후 확인해 주세요.")
 
 
+def register_recording(dataset_root: str | Path, audio_path: str | Path | None, transcript: str) -> str:
+    """Copy a quality-approved WAV into a dataset and append its transcript."""
+    report = inspect_recording(audio_path, transcript)
+    if not report.startswith("판정: 사용 가능"):
+        return report + "\n저장하지 않았습니다."
+    root = Path(dataset_root).expanduser()
+    raw_dir = root / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    existing = {path.stem for path in raw_dir.glob("*.wav")}
+    index = 1
+    while f"{index:04d}" in existing:
+        index += 1
+    filename = f"{index:04d}.wav"
+    destination = raw_dir / filename
+    shutil.copyfile(Path(audio_path), destination)
+    transcript_path = root / "transcripts.csv"
+    needs_header = not transcript_path.exists() or transcript_path.stat().st_size == 0
+    with transcript_path.open("a", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        if needs_header:
+            writer.writerow(["filename", "text"])
+        writer.writerow([filename, transcript.strip()])
+    return report + f"\n저장 완료: {destination}"
+
+
 def build_demo():
     try:
         import gradio as gr
@@ -69,8 +96,12 @@ def build_demo():
         transcript = gr.Textbox(label="Transcript", value=RECOMMENDED_SENTENCES[0])
         inspect = gr.Button("품질 검사")
         report = gr.Textbox(label="검사 결과", lines=5)
+        dataset_root = gr.Textbox(label="데이터셋 경로", value="data/my_voice")
+        save = gr.Button("검사 통과 파일을 데이터셋에 저장")
+        save_report = gr.Textbox(label="저장 결과", lines=6)
         sentence.change(lambda value: value, inputs=sentence, outputs=transcript)
         inspect.click(inspect_recording, inputs=[audio, transcript], outputs=report)
+        save.click(register_recording, inputs=[dataset_root, audio, transcript], outputs=save_report)
     return demo
 
 
