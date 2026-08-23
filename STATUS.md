@@ -98,6 +98,7 @@
 - [x] Added read-only Python bridge primitives for job snapshots and Voice Package catalogs; 59 tests pass.
 - [x] Added `bridge-status` CLI for one-call combined job/catalog JSON snapshots.
 - [x] Updated roadmap to reflect the implemented Python subprocess/JSON bridge; SwiftUI shell remains separate.
+- [x] Added parse-checked SwiftUI shell sources in `mac_app/` for bridge status and Voice Package listing.
 
 ## In progress
 

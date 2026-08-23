@@ -53,7 +53,7 @@
 
 ## Phase 4 — macOS 제품화
 
-- [ ] SwiftUI shell
+- [x] SwiftUI shell source scaffold (bridge status + Voice Package list)
 - [ ] AVAudioEngine 녹음
 - [x] Python engine subprocess/API bridge (job/bridge-status 기반)
 - [ ] microphone/filesystem 권한
