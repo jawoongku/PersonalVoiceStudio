@@ -24,6 +24,7 @@ struct ContentView: View {
     @State private var models: [URL] = []
     @State private var renameModel: URL?
     @State private var renameValue = ""
+    @State private var deleteModelTarget: URL?
     @State private var isCreatingDataset = false
     @State private var datasetProgress = 0.0
     @State private var datasetProgressText = ""
@@ -66,6 +67,12 @@ struct ContentView: View {
             Button("변경") { commitRenameModel() }
         } message: {
             Text("새 모델 이름을 입력하세요.")
+        }
+        .alert("모델 전체 삭제", isPresented: Binding(get: { deleteModelTarget != nil }, set: { if !$0 { deleteModelTarget = nil } })) {
+            Button("취소", role: .cancel) { deleteModelTarget = nil }
+            Button("데이터·학습 결과·TTS 패키지 삭제", role: .destructive) { confirmDeleteModel() }
+        } message: {
+            Text("이 모델의 녹음 데이터셋, prepared 데이터, 학습 checkpoint, Voice Package를 모두 삭제합니다.")
         }
     }
 
@@ -209,7 +216,7 @@ struct ContentView: View {
                                     Text(model.lastPathComponent)
                                     Spacer()
                                     Button("이름 변경") { renameModel = model; renameValue = model.lastPathComponent }
-                                    Button("삭제", role: .destructive) { deleteModel(model) }
+                                    Button("삭제", role: .destructive) { deleteModelTarget = model }
                                 }
                             }
                         }
@@ -553,16 +560,28 @@ struct ContentView: View {
             .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending } ?? []
     }
 
-    private func deleteModel(_ model: URL) {
+    private func confirmDeleteModel() {
+        guard let model = deleteModelTarget else { return }
+        let name = model.lastPathComponent
+        let root = URL(fileURLWithPath: projectDirectory)
+        let targets = [
+            root.appendingPathComponent("data/models/\(name)"),
+            root.appendingPathComponent("data/models/\(name)_prepared"),
+            root.appendingPathComponent("artifacts/runs/\(name)"),
+            root.appendingPathComponent("artifacts/voices/\(name)"),
+        ]
         do {
-            try FileManager.default.removeItem(at: model)
+            for target in targets where FileManager.default.fileExists(atPath: target.path) {
+                try FileManager.default.removeItem(at: target)
+            }
+            deleteModelTarget = nil
             refreshModels()
-            recordingValidation = "모델 삭제 완료: \(model.lastPathComponent)"
+            refresh()
+            recordingValidation = "모델 전체 삭제 완료: \(name)"
         } catch {
-            errorMessage = "모델을 삭제하지 못했습니다. \(error.localizedDescription)"
+            errorMessage = "모델 전체를 삭제하지 못했습니다. \(error.localizedDescription)"
         }
     }
-
     private func commitRenameModel() {
         guard let source = renameModel else { return }
         let value = renameValue.trimmingCharacters(in: .whitespacesAndNewlines)
