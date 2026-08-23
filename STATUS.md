@@ -147,6 +147,7 @@
 - [x] Added a non-mutating MPS environment preflight; the current PyTorch/macOS mismatch is now explicitly classified as `os-runtime-mismatch`.
 - [x] MPS training device resolution now surfaces the runtime diagnosis and next action instead of a generic failure.
 - [x] Added an isolated, non-destructive MPS candidate environment creator with dry-run mode.
+- [x] Created the isolated `pvs-mps` candidate with PyTorch 2.5.1; repeated fresh-process probes still report `os-runtime-mismatch`, so the candidate is not accepted as MPS-ready.
 - [x] Locate/provision the core `Fun-CosyVoice3-0.5B` model assets without duplicating an existing copy.
 - [ ] Implement and verify baseline MPS inference.
 - [ ] Verify baseline with a real local CosyVoice3 model and non-silent WAV.
