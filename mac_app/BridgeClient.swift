@@ -45,43 +45,65 @@ struct BridgeSnapshot: Codable {
 }
 
 enum BridgeClient {
+    private static func configure(_ process: Process, workingDirectory: String) {
+        let environment = ProcessInfo.processInfo.environment
+        let bundledPython = "/opt/homebrew/Caskroom/miniconda/base/envs/cosyvoice/bin/python"
+        let configuredPython = environment["PVS_PYTHON"]
+        let python = configuredPython ?? (FileManager.default.isExecutableFile(atPath: bundledPython) ? bundledPython : "/usr/bin/env")
+        process.executableURL = URL(fileURLWithPath: python)
+        process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
+        var childEnvironment = environment
+        let existingPythonPath = environment["PYTHONPATH"]
+        childEnvironment["PYTHONPATH"] = existingPythonPath.map { "\(workingDirectory):\($0)" } ?? workingDirectory
+        process.environment = childEnvironment
+    }
+
+    private static func failure(_ process: Process, stderr: Pipe) -> NSError {
+        let detail = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let message = detail?.isEmpty == false ? detail! : "Python bridge exited with status \(process.terminationStatus)"
+        return NSError(domain: "PersonalVoiceStudio", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: message])
+    }
+
     static func fetch(job: String, voices: String, workingDirectory: String) throws -> BridgeSnapshot {
         let process = Process()
-        let python = ProcessInfo.processInfo.environment["PVS_PYTHON"] ?? "/usr/bin/env"
-        process.executableURL = URL(fileURLWithPath: python)
+        configure(process, workingDirectory: workingDirectory)
+        let python = process.executableURL?.path ?? "/usr/bin/env"
         let args = ["-m", "mac_voice", "bridge-status", "--job", job, "--voices", voices]
         process.arguments = python == "/usr/bin/env" ? ["python3"] + args : args
-        process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
         let pipe = Pipe()
+        let stderr = Pipe()
         process.standardOutput = pipe
+        process.standardError = stderr
         try process.run()
         process.waitUntilExit()
-        guard process.terminationStatus == 0 else { throw NSError(domain: "PersonalVoiceStudio", code: Int(process.terminationStatus)) }
+        guard process.terminationStatus == 0 else { throw failure(process, stderr: stderr) }
         return try JSONDecoder().decode(BridgeSnapshot.self, from: pipe.fileHandleForReading.readDataToEndOfFile())
     }
 
     static func synthesize(voice: String, text: String, output: String, modelDirectory: String, workingDirectory: String, device: String = "cpu") throws {
         let process = Process()
-        let python = ProcessInfo.processInfo.environment["PVS_PYTHON"] ?? "/usr/bin/env"
-        process.executableURL = URL(fileURLWithPath: python)
+        configure(process, workingDirectory: workingDirectory)
+        let python = process.executableURL?.path ?? "/usr/bin/env"
         let command = device == "mps" ? "mps-synth" : "synth"
         let args = ["-m", "mac_voice", command, "--voice", voice, "--text", text, "--output", output, "--model-dir", modelDirectory]
         process.arguments = python == "/usr/bin/env" ? ["python3"] + args : args
-        process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
+        let stderr = Pipe()
+        process.standardError = stderr
         try process.run()
         process.waitUntilExit()
-        guard process.terminationStatus == 0 else { throw NSError(domain: "PersonalVoiceStudio", code: Int(process.terminationStatus)) }
+        guard process.terminationStatus == 0 else { throw failure(process, stderr: stderr) }
     }
 
     static func cancelJob(job: String, workingDirectory: String) throws {
         let process = Process()
-        let python = ProcessInfo.processInfo.environment["PVS_PYTHON"] ?? "/usr/bin/env"
-        process.executableURL = URL(fileURLWithPath: python)
+        configure(process, workingDirectory: workingDirectory)
+        let python = process.executableURL?.path ?? "/usr/bin/env"
         let args = ["-m", "mac_voice", "job-update", "--job", job, "--status", "cancelled"]
         process.arguments = python == "/usr/bin/env" ? ["python3"] + args : args
-        process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
+        let stderr = Pipe()
+        process.standardError = stderr
         try process.run()
         process.waitUntilExit()
-        guard process.terminationStatus == 0 else { throw NSError(domain: "PersonalVoiceStudio", code: Int(process.terminationStatus)) }
+        guard process.terminationStatus == 0 else { throw failure(process, stderr: stderr) }
     }
 }
