@@ -58,11 +58,12 @@ enum BridgeClient {
         return try JSONDecoder().decode(BridgeSnapshot.self, from: pipe.fileHandleForReading.readDataToEndOfFile())
     }
 
-    static func synthesize(voice: String, text: String, output: String, modelDirectory: String, workingDirectory: String) throws {
+    static func synthesize(voice: String, text: String, output: String, modelDirectory: String, workingDirectory: String, device: String = "cpu") throws {
         let process = Process()
         let python = ProcessInfo.processInfo.environment["PVS_PYTHON"] ?? "/usr/bin/env"
         process.executableURL = URL(fileURLWithPath: python)
-        let args = ["-m", "mac_voice", "synth", "--voice", voice, "--text", text, "--output", output, "--model-dir", modelDirectory]
+        let command = device == "mps" ? "mps-synth" : "synth"
+        let args = ["-m", "mac_voice", command, "--voice", voice, "--text", text, "--output", output, "--model-dir", modelDirectory]
         process.arguments = python == "/usr/bin/env" ? ["python3"] + args : args
         process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
         try process.run()

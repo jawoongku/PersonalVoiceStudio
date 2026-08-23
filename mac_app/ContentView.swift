@@ -79,11 +79,12 @@ struct ContentView: View {
                 guard !ttsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { errorMessage = "TTS 텍스트를 입력해 주세요."; return }
                 guard let voicePath = selectedVoicePath ?? snapshot?.voices.first(where: { $0.valid })?.path else { errorMessage = "사용 가능한 Voice Package가 없습니다."; return }
                 let output = URL(fileURLWithPath: projectDirectory).appendingPathComponent("artifacts/swiftui_tts.wav")
+                let device = ProcessInfo.processInfo.environment["PVS_TTS_DEVICE"] ?? "cpu"
                 isSynthesizing = true
                 let modelDirectory = ProcessInfo.processInfo.environment["PVS_MODEL_DIR"] ?? "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
                 DispatchQueue.global(qos: .userInitiated).async {
                     do {
-                        try BridgeClient.synthesize(voice: voicePath, text: ttsText, output: output.path, modelDirectory: modelDirectory, workingDirectory: projectDirectory)
+                        try BridgeClient.synthesize(voice: voicePath, text: ttsText, output: output.path, modelDirectory: modelDirectory, workingDirectory: projectDirectory, device: device)
                         DispatchQueue.main.async { ttsOutput = output; isSynthesizing = false }
                     } catch {
                         DispatchQueue.main.async { errorMessage = "TTS 오류: \(error.localizedDescription)"; isSynthesizing = false }

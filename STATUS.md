@@ -156,6 +156,7 @@
 - [x] Added SHA-256 artifact manifest creation and verification for retained runs and Voice Packages.
 - [x] Connected full MPS parquet training to optional `job.json` running/completed/failed status and metrics updates.
 - [x] Host Terminal MPS adapter synth passed: generated a 5.92-second WAV from `my_voice_mps_epoch`; CAMPPlus similarity `0.915502`.
+- [x] SwiftUI bridge now selects CPU or MPS Voice Package synthesis via `PVS_TTS_DEVICE` (CPU remains the default).
 - [x] Added release signing readiness check; current machine has Apple Development certificates but no Developer ID Application certificate or notarization profile.
 - [x] Host Terminal user parquet MPS batch passed: utt `0002`, finite loss `3.8925516605`, 96 LoRA matches, non-zero gradients, and optimizer step.
 - [x] Host Terminal full user parquet MPS epoch passed: 8 train rows, 2 dev rows, final train loss `4.3410806656`, dev loss `4.5222234726`, adapter/checkpoint/state/metrics saved.
