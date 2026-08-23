@@ -12,6 +12,8 @@ Apple Silicon Mac에서 CosyVoice3 기반 음성 데이터 준비, LoRA 학습, 
 scripts/verify_all.sh
 ```
 
+동일한 작업은 `make verify`, `make app`, `make ui`로도 실행할 수 있습니다.
+
 ## 현재 상태
 
 구현 및 단위 검증 완료:
