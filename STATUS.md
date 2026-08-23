@@ -91,6 +91,7 @@
 - [x] UI-started training now records the spawned process PID in `job.json`.
 - [x] Job cancellation now sends a best-effort SIGTERM to the recorded running PID before marking cancelled.
 - [x] `job-status` now reports whether a recorded PID is alive.
+- [x] Added `job-status --json` for machine-readable UI/SwiftUI bridge consumption.
 
 ## In progress
 

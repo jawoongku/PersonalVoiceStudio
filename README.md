@@ -60,6 +60,8 @@ python -m mac_voice job-create --output artifacts/runs/my_voice --config configs
 python -m mac_voice job-update --job artifacts/runs/my_voice/job.json --status running --step 2
 ```
 
+자동화나 UI 브리지에서는 `--json` 옵션으로 상태를 읽을 수 있습니다.
+
 실제 prepared parquet 기반 CPU smoke 학습을 작업 상태와 함께 실행하려면:
 
 ```bash

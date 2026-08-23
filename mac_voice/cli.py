@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import json
 from pathlib import Path
 
 from .dataset import prepare_dataset, render_validation, validate_dataset
@@ -35,6 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
     init_project.add_argument("--overwrite", action="store_true")
     job_status = subparsers.add_parser("job-status", help="read a filesystem-backed training job status")
     job_status.add_argument("--job", required=True, help="path to job.json")
+    job_status.add_argument("--json", action="store_true", dest="as_json")
     voices = subparsers.add_parser("list-voices", help="list and validate local Voice Packages")
     voices.add_argument("--root", default="artifacts/voices")
     job_create = subparsers.add_parser("job-create", help="create a queued training job metadata file")
@@ -183,6 +185,9 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, ValueError) as exc:
             print(f"[ERROR] {exc}")
             return 1
+        if args.as_json:
+            print(json.dumps(job, ensure_ascii=False))
+            return 0
         print(f"[OK] status: {job['status']}")
         for key in ("command", "config", "pid", "step", "package", "error", "updated_at"):
             if key in job and job[key] is not None:
