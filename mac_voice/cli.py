@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 from .dataset import prepare_dataset, render_validation, validate_dataset
@@ -186,6 +187,12 @@ def main(argv: list[str] | None = None) -> int:
         for key in ("command", "config", "pid", "step", "package", "error", "updated_at"):
             if key in job and job[key] is not None:
                 print(f"[INFO] {key}: {job[key]}")
+        if job.get("pid"):
+            try:
+                os.kill(int(job["pid"]), 0)
+                print("[INFO] process: alive")
+            except (OSError, ValueError):
+                print("[INFO] process: not running")
         metrics = job.get("metrics")
         if isinstance(metrics, dict):
             if not job.get("step") and "steps" in metrics:
