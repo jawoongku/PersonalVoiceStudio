@@ -75,6 +75,7 @@
 - [x] Connected the existing chunked `narrate` engine to a long-text UI panel with playback; 49 tests pass.
 - [x] Added configurable long-text chunk size (60–400 chars) to the narration UI; 50 tests pass.
 - [x] Added UI cancellation marker for jobs via `job.json`; actual process interruption remains a future runner integration; 51 tests pass.
+- [x] Added `cancel_path` cooperative cancellation to the reusable training loop; 52 tests pass.
 
 ## In progress
 

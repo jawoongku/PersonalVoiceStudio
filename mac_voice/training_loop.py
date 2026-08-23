@@ -50,6 +50,7 @@ def fit(
     start_step: int = 0,
     start_epoch: int = 0,
     resume_from: str | Path | None = None,
+    cancel_path: str | Path | None = None,
 ) -> dict[str, Any]:
     if max_epochs <= 0 or validate_every <= 0:
         raise ValueError("max_epochs and validate_every must be positive")
@@ -70,6 +71,8 @@ def fit(
     last_loss: float | None = None
     for epoch in range(start_epoch, start_epoch + max_epochs):
         for batch in train_batches:
+            if cancel_path is not None and Path(cancel_path).expanduser().exists():
+                return {"step": step, "epoch": epoch, "train_loss": last_loss, "best_val_loss": best_val, "status": "cancelled"}
             started = time.perf_counter()
             last_loss = train_one_step(model, batch, forward_fn, optimizer, config, device)
             step += 1

@@ -42,3 +42,16 @@ class TrainingLoopTests(unittest.TestCase):
             fit(model, batches, batches, forward, output_dir=root, device=torch.device("cpu"), config=TrainerConfig(device="cpu", learning_rate=0.01), max_steps=1)
             result = fit(model, batches, batches, forward, output_dir=root, device=torch.device("cpu"), config=TrainerConfig(device="cpu", learning_rate=0.01), max_steps=2, resume_from=root / "training_state.pt")
             self.assertEqual(result["step"], 2)
+
+    def test_fit_honors_cancel_marker_before_next_batch(self):
+        model = nn.Sequential(nn.Linear(2, 1))
+        model, _ = inject_lora(model, ["0"], rank=1, alpha=2, dropout=0.0)
+        freeze_base_parameters(model)
+        batches = [torch.ones(2, 2)]
+        forward = lambda batch: ((model(batch) - 1.0) ** 2).mean()
+        with tempfile.TemporaryDirectory() as temp:
+            cancel = Path(temp) / "cancel"
+            cancel.touch()
+            result = fit(model, batches, batches, forward, output_dir=temp, device=torch.device("cpu"), config=TrainerConfig(device="cpu"), cancel_path=cancel)
+            self.assertEqual(result["status"], "cancelled")
+            self.assertEqual(result["step"], 0)
