@@ -60,7 +60,10 @@ enum BridgeClient {
 
     private static func failure(_ process: Process, stderr: Pipe) -> NSError {
         let detail = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let message = detail?.isEmpty == false ? detail! : "Python bridge exited with status \(process.terminationStatus)"
+        let lines = detail?.split(separator: "\n").map(String.init) ?? []
+        let important = lines.filter { $0.contains("[ERROR]") || $0.contains("[BLOCKED]") || $0.contains("Traceback") || $0.contains("RuntimeError") || $0.contains("ValueError") }
+        let selected = important.isEmpty ? Array(lines.suffix(12)) : Array(important.suffix(8))
+        let message = selected.isEmpty ? "Python bridge exited with status \(process.terminationStatus)" : selected.joined(separator: "\n")
         return NSError(domain: "PersonalVoiceStudio", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: message])
     }
 
@@ -113,10 +116,11 @@ enum BridgeClient {
         let python = process.executableURL?.path ?? "/usr/bin/env"
         let args = ["-m", "mac_voice", "create-voice", "--dataset", dataset, "--name", name, "--model-dir", modelDirectory]
         process.arguments = python == "/usr/bin/env" ? ["python3"] + args : args
-        let stderr = Pipe()
-        process.standardError = stderr
+        let output = Pipe()
+        process.standardOutput = output
+        process.standardError = output
         try process.run()
         process.waitUntilExit()
-        guard process.terminationStatus == 0 else { throw failure(process, stderr: stderr) }
+        guard process.terminationStatus == 0 else { throw failure(process, stderr: output) }
     }
 }
