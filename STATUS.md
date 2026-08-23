@@ -72,6 +72,7 @@
 - [x] Added isolated optional ASR dependency manifest (`requirements-asr.txt`) so the base environment remains unchanged.
 - [x] Added Gradio 3-compatible separate microphone/upload inputs with unified inspection and registration; 47 tests pass.
 - [x] Extended the recording quality gate to flag non-24kHz or non-mono input; 48 tests pass.
+- [x] Connected the existing chunked `narrate` engine to a long-text UI panel with playback; 49 tests pass.
 
 ## In progress
 

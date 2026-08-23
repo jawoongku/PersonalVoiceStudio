@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, prepare_dataset_for_ui, register_recording, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, narrate_for_ui, prepare_dataset_for_ui, register_recording, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -42,6 +42,11 @@ class GradioPrototypeTests(unittest.TestCase):
 
     def test_input_wrapper_accepts_upload_when_microphone_empty(self):
         self.assertIn("녹음 파일을 먼저", inspect_recording_inputs(None, None, "문장"))
+
+    def test_narrate_requires_text(self):
+        report, output = narrate_for_ui("artifacts/voices", "demo", "", "missing", "out.wav")
+        self.assertIn("긴 텍스트를 입력", report)
+        self.assertIsNone(output)
 
     def test_recording_inspection_requires_transcript(self):
         self.assertIn("transcript", inspect_recording("/tmp/missing.wav", ""))

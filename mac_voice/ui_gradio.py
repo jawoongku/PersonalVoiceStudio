@@ -7,6 +7,8 @@ import inspect as pyinspect
 import csv
 import shutil
 import difflib
+import tempfile
+import os
 from pathlib import Path
 
 from .dataset import _pcm_stats, prepare_dataset, render_validation, validate_dataset
@@ -17,6 +19,7 @@ from .config import load_config, validate_training_config
 from .parquet import validate_data_list
 from .jobs import read_job
 from .metrics_view import summarize_metrics
+from .narrate import run_narrate
 
 RECOMMENDED_SENTENCES = [
     "오늘 아침에는 평소보다 조금 일찍 일어났습니다.",
@@ -179,6 +182,22 @@ def job_status_for_ui(job_path: str) -> str:
     return "\n".join(lines)
 
 
+def narrate_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, output: str) -> tuple[str, str | None]:
+    if not text.strip():
+        return "긴 텍스트를 입력해 주세요.", None
+    fd, script_name = tempfile.mkstemp(prefix="pvs_narrate_", suffix=".txt")
+    os.close(fd)
+    script_path = Path(script_name)
+    script_path.write_text(text.strip(), encoding="utf-8")
+    try:
+        result = run_narrate(Path(voice_root).expanduser() / voice_name, script_path, output, model_dir=model_dir)
+    except (OSError, RuntimeError, ValueError) as exc:
+        return f"긴 글 합성 실패: {exc}", None
+    finally:
+        script_path.unlink(missing_ok=True)
+    return f"긴 글 합성 완료: {result}", str(result)
+
+
 def inspect_recording_inputs(microphone: str | Path | None, uploaded: str | Path | None, transcript: str, recognized: str = "") -> str:
     return inspect_recording(microphone or uploaded, transcript, recognized)
 
@@ -258,6 +277,13 @@ def build_demo():
         synth_report = gr.Textbox(label="TTS 결과", lines=3)
         synth_audio = gr.Audio(label="생성된 음성", type="filepath", interactive=False)
         synth.click(synthesize_for_ui, inputs=[voice_root, voice_name, tts_text, model_dir, output], outputs=[synth_report, synth_audio])
+        gr.Markdown("## 긴 글 TTS")
+        long_text = gr.Textbox(label="긴 텍스트", lines=8)
+        long_output = gr.Textbox(label="긴 글 출력 WAV", value="artifacts/ui_narration.wav")
+        narrate = gr.Button("긴 글 음성 생성")
+        narrate_report = gr.Textbox(label="긴 글 결과", lines=3)
+        narrate_audio = gr.Audio(label="긴 글 생성 음성", type="filepath", interactive=False)
+        narrate.click(narrate_for_ui, inputs=[voice_root, voice_name, long_text, model_dir, long_output], outputs=[narrate_report, narrate_audio])
         history = gr.Textbox(label="최근 생성 기록", lines=6)
         refresh_history = gr.Button("히스토리 새로고침")
         refresh_history.click(lambda: "\n".join(f"{item.get('created_at', '')} | {item.get('voice', '')} | {item.get('text', '')}" for item in read_tts_history("artifacts/tts_history.jsonl")), outputs=history)
