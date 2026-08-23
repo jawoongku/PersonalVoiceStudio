@@ -27,10 +27,19 @@ struct RunEntry: Codable, Identifiable {
     var id: String { path }
 }
 
+struct MPSSnapshot: Codable {
+    let status: String
+    let torch: String?
+    let macos: String
+    let tensor_probe: Bool
+    let action: String
+}
+
 struct BridgeSnapshot: Codable {
     let job: JobSnapshot
     let voices: [VoiceEntry]
     let runs: [RunEntry]
+    let mps: MPSSnapshot
 }
 
 enum BridgeClient {

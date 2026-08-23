@@ -20,6 +20,14 @@ struct ContentView: View {
             Text("Personal Voice Studio").font(.title)
             if let snapshot {
                 Text("작업 상태: \(snapshot.job.status)")
+                HStack(alignment: .top) {
+                    Image(systemName: snapshot.mps.tensor_probe ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .foregroundStyle(snapshot.mps.tensor_probe ? .green : .orange)
+                    VStack(alignment: .leading) {
+                        Text("MPS: \(snapshot.mps.status)").font(.headline)
+                        Text(snapshot.mps.action).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
                 Text("Voice Package: \(snapshot.voices.filter(\.valid).count)개 사용 가능")
                 Picker("TTS Voice", selection: $selectedVoicePath) {
                     ForEach(snapshot.voices.filter(\.valid)) { voice in
