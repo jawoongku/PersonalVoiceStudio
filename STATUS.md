@@ -89,6 +89,7 @@
 - [x] Background UI training now persists combined stdout/stderr to `job.log` beside `job.json`.
 - [x] Added UI log refresh for the latest `job.log` lines; 55 tests pass.
 - [x] UI-started training now records the spawned process PID in `job.json`.
+- [x] Job cancellation now sends a best-effort SIGTERM to the recorded running PID before marking cancelled.
 
 ## In progress
 

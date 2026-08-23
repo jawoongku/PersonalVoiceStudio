@@ -187,11 +187,21 @@ def job_status_for_ui(job_path: str) -> str:
 
 def cancel_job_for_ui(job_path: str) -> str:
     try:
-        from .jobs import update_job
+        from .jobs import read_job, update_job
+        current = read_job(job_path)
+        pid = current.get("pid")
+        terminated = False
+        if current.get("status") == "running" and pid:
+            try:
+                os.kill(int(pid), 15)
+                terminated = True
+            except (ProcessLookupError, PermissionError, ValueError):
+                pass
         job = update_job(job_path, "cancelled")
     except (OSError, ValueError) as exc:
         return f"작업을 취소할 수 없습니다: {exc}"
-    return f"작업 상태가 cancelled로 변경되었습니다.\nupdated_at: {job['updated_at']}"
+    detail = "프로세스 종료 신호를 보냈습니다." if terminated else "실행 프로세스가 없거나 이미 종료되었습니다."
+    return f"작업 상태가 cancelled로 변경되었습니다.\n{detail}\nupdated_at: {job['updated_at']}"
 
 
 def read_job_log_for_ui(job_path: str, limit: int = 80) -> str:
