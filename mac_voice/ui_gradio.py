@@ -38,6 +38,19 @@ def compare_transcripts(expected: str, recognized: str) -> str:
     return f"발음 비교 유사도: {score:.1%} ({verdict})"
 
 
+def transcribe_with_whisper(audio_path: str | Path | None, model_name: str = "tiny") -> str:
+    if not audio_path or not Path(audio_path).is_file():
+        return "ASR 입력 파일을 찾을 수 없습니다."
+    try:
+        import whisper
+        model = whisper.load_model(model_name)
+        result = model.transcribe(str(audio_path), language="ko", fp16=False)
+    except (ImportError, OSError, RuntimeError, ValueError) as exc:
+        return f"ASR를 실행할 수 없습니다: {exc}"
+    text = str(result.get("text", "")).strip()
+    return text or "ASR 결과가 비어 있습니다."
+
+
 def inspect_recording(audio_path: str | Path | None, transcript: str, recognized: str = "") -> str:
     if not audio_path:
         return "녹음 파일을 먼저 선택하거나 녹음해 주세요."
@@ -180,6 +193,8 @@ def build_demo():
             gr.Markdown("Gradio 3.x에서는 마이크 입력을 사용하세요. 업로드 파일은 다음 단계에서 통합합니다.")
         transcript = gr.Textbox(label="Transcript", value=RECOMMENDED_SENTENCES[0])
         recognized = gr.Textbox(label="ASR 인식 문장 (선택)")
+        asr_model = gr.Dropdown(["tiny", "base"], value="tiny", label="ASR 모델")
+        asr = gr.Button("ASR 자동 인식")
         inspect = gr.Button("품질 검사")
         report = gr.Textbox(label="검사 결과", lines=5)
         dataset_root = gr.Textbox(label="데이터셋 경로", value="data/my_voice")
@@ -187,6 +202,7 @@ def build_demo():
         save_report = gr.Textbox(label="저장 결과", lines=6)
         sentence.change(lambda value: value, inputs=sentence, outputs=transcript)
         inspect.click(inspect_recording, inputs=[audio, transcript, recognized], outputs=report)
+        asr.click(transcribe_with_whisper, inputs=[audio, asr_model], outputs=recognized)
         save.click(register_recording, inputs=[dataset_root, audio, transcript], outputs=save_report)
         dataset_check = gr.Button("데이터셋 전체 검증")
         dataset_report = gr.Textbox(label="데이터셋 검증 결과", lines=8)
