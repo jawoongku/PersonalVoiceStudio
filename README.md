@@ -39,6 +39,12 @@ python -m mac_voice ui
 python -m mac_voice init-project --root ~/PersonalVoiceProject
 ```
 
+학습 작업 상태 파일은 다음처럼 조회합니다.
+
+```bash
+python -m mac_voice job-status --job artifacts/runs/my_voice/job.json
+```
+
 ## 환경 진단
 
 ```bash

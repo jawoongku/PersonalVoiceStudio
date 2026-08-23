@@ -20,6 +20,7 @@ from .parquet import validate_data_list
 from .mps_smoke import run_mps_smoke
 from .ui_gradio import launch_ui
 from .project import initialize_project
+from .jobs import read_job
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
 
 
@@ -29,6 +30,8 @@ def build_parser() -> argparse.ArgumentParser:
     init_project = subparsers.add_parser("init-project", help="create a new voice project layout")
     init_project.add_argument("--root", required=True, help="new project directory")
     init_project.add_argument("--overwrite", action="store_true")
+    job_status = subparsers.add_parser("job-status", help="read a filesystem-backed training job status")
+    job_status.add_argument("--job", required=True, help="path to job.json")
     doctor = subparsers.add_parser("doctor", help="inspect the local Mac/CosyVoice environment")
     doctor.add_argument("--model-dir", default=None, help="CosyVoice3 model directory")
     doctor.add_argument("--upstream-root", default=None, help="CosyVoice checkout directory")
@@ -136,6 +139,17 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         for key, value in result.items():
             print(f"[OK] {key}: {value}")
+        return 0
+    if args.command == "job-status":
+        try:
+            job = read_job(args.job)
+        except (OSError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] status: {job['status']}")
+        for key in ("command", "config", "step", "error", "updated_at"):
+            if key in job:
+                print(f"[INFO] {key}: {job[key]}")
         return 0
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)
