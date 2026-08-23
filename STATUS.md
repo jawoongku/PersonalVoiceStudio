@@ -82,6 +82,7 @@
 - [x] Added and ran `parquet-resume-job` on the generated adapter/state, confirming a fresh-model resume step completes.
 - [x] Enhanced `job-status` to show train/dev loss and checkpoint/state paths when available.
 - [x] Added `package-job` to build and record a Voice Package from a run with job state transitions.
+- [x] Ran `package-job` on the real CPU train20 run; generated and validated `my_voice_cpu_train20_verified`.
 
 ## In progress
 
