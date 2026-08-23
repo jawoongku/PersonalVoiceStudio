@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, cancel_job_for_ui, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, narrate_for_ui, prepare_dataset_for_ui, register_recording, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, cancel_job_for_ui, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, narrate_for_ui, prepare_dataset_for_ui, register_recording, start_training_job_for_ui, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -57,6 +57,13 @@ class GradioPrototypeTests(unittest.TestCase):
             from mac_voice.jobs import create_job
             path = create_job(Path(temp) / "run", command="train", config="training.yaml")
             self.assertIn("cancelled", cancel_job_for_ui(str(path)))
+
+    def test_start_training_requires_fresh_job_path(self):
+        with tempfile.TemporaryDirectory() as temp:
+            from mac_voice.jobs import create_job
+            job = create_job(Path(temp) / "run", command="train", config="training.yaml")
+            report = start_training_job_for_ui("missing.train", "missing.dev", "missing.model", "out.pt", str(job), 1)
+            self.assertIn("시작할 수 없습니다", report)
 
     def test_recording_inspection_requires_transcript(self):
         self.assertIn("transcript", inspect_recording("/tmp/missing.wav", ""))

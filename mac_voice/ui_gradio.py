@@ -9,6 +9,8 @@ import shutil
 import difflib
 import tempfile
 import os
+import sys
+import subprocess
 from pathlib import Path
 
 from .dataset import _pcm_stats, prepare_dataset, render_validation, validate_dataset
@@ -18,6 +20,7 @@ from .history import append_tts_history, read_tts_history
 from .config import load_config, validate_training_config
 from .parquet import validate_data_list
 from .jobs import read_job
+from .jobs import create_job
 from .metrics_view import summarize_metrics
 from .narrate import run_narrate
 
@@ -191,6 +194,16 @@ def cancel_job_for_ui(job_path: str) -> str:
     return f"작업 상태가 cancelled로 변경되었습니다.\nupdated_at: {job['updated_at']}"
 
 
+def start_training_job_for_ui(train_data: str, dev_data: str, model_dir: str, output: str, job_path: str, steps: int = 2) -> str:
+    try:
+        create_job(Path(job_path).expanduser().parent, command="parquet-train-job", config="ui")
+        command = [sys.executable, "-m", "mac_voice", "parquet-train-job", "--train-data-list", train_data, "--dev-data-list", dev_data, "--model-dir", model_dir, "--output", output, "--job", job_path, "--steps", str(int(steps))]
+        subprocess.Popen(command, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except (OSError, FileExistsError, ValueError) as exc:
+        return f"학습 작업을 시작할 수 없습니다: {exc}"
+    return f"학습 작업을 시작했습니다.\njob: {job_path}"
+
+
 def narrate_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, output: str, max_chars: int = 180) -> tuple[str, str | None]:
     if not text.strip():
         return "긴 텍스트를 입력해 주세요.", None
@@ -264,6 +277,16 @@ def build_demo():
         preflight = gr.Button("학습 준비 상태 점검")
         preflight_report = gr.Textbox(label="학습 사전 점검 결과", lines=8)
         preflight.click(training_preflight_for_ui, inputs=training_config, outputs=preflight_report)
+        gr.Markdown("## 실제 CPU 학습 시작")
+        train_data = gr.Textbox(label="train data.list", value="data/my_voice_prepared/train/parquet/data.list")
+        dev_data = gr.Textbox(label="dev data.list", value="data/my_voice_prepared/dev/parquet/data.list")
+        train_output = gr.Textbox(label="adapter 출력", value="artifacts/runs/ui_train/adapter.pt")
+        train_job_path = gr.Textbox(label="job.json", value="artifacts/runs/ui_train/job.json")
+        train_model_dir = gr.Textbox(label="학습 모델 경로", value="/Users/jawoongku/Models/Fun-CosyVoice3-0.5B")
+        train_steps = gr.Slider(1, 20, value=2, step=1, label="CPU 학습 step")
+        start_train = gr.Button("실제 CPU 학습 시작")
+        start_train_report = gr.Textbox(label="학습 시작 결과", lines=3)
+        start_train.click(start_training_job_for_ui, inputs=[train_data, dev_data, train_model_dir, train_output, train_job_path, train_steps], outputs=start_train_report)
         gr.Markdown("## 학습 작업 상태")
         job_path = gr.Textbox(label="job.json 경로", value="artifacts/runs/my_voice/job.json")
         job_refresh = gr.Button("작업 상태 새로고침")
