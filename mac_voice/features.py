@@ -6,6 +6,7 @@ import importlib
 import json
 import logging
 import subprocess
+import sys
 import wave
 from dataclasses import dataclass
 from pathlib import Path
@@ -215,7 +216,7 @@ def build_parquet(split_dir: str | Path, upstream_root: str | Path, processes: i
     destination = split / "parquet"
     destination.mkdir(parents=True, exist_ok=True)
     command = [
-        "python", str(script), "--num_utts_per_parquet", "1000",
+        sys.executable, str(script), "--num_utts_per_parquet", "1000",
         "--num_processes", str(processes), "--src_dir", str(split), "--des_dir", str(destination),
     ]
     result = subprocess.run(command, check=False, capture_output=True, text=True)
