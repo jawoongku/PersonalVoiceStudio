@@ -99,6 +99,7 @@
 - [x] Added `bridge-status` CLI for one-call combined job/catalog JSON snapshots.
 - [x] Updated roadmap to reflect the implemented Python subprocess/JSON bridge; SwiftUI shell remains separate.
 - [x] Added parse-checked SwiftUI shell sources in `mac_app/` for bridge status and Voice Package listing.
+- [x] Added and validated a Swift Package manifest for opening the shell in Xcode or SwiftPM.
 
 ## In progress
 
