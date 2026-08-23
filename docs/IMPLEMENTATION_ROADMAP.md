@@ -75,6 +75,7 @@
 - [x] 실제 CosyVoice3 모델 MPS baseline inference 및 non-silent WAV 검증
 - [x] 실제 사용자 parquet 1건 MPS forward/backward/LoRA gradient/optimizer step 검증
 - [x] 실제 사용자 train/dev parquet 전체 1-epoch MPS 학습·validation·checkpoint·metrics 검증
+- [x] generic training loop를 실제 CosyVoice3 parquet·MPS에 연결하고 host 1-epoch acceptance 검증
 - [x] MPS adapter·optimizer state 새 프로세스 resume 및 추가 step 검증
 - [x] MPS 학습 adapter의 Voice Package·synth·compare 연결 및 실제 WAV 검증
 - [x] Voice Package adapter의 직접 MPS synth 및 화자 유사도 검증

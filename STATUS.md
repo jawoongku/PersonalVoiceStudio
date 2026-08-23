@@ -184,7 +184,7 @@
 - [x] Run the trainer on real MPS with real CosyVoice user parquet batches (8-row epoch).
 - [x] Connect the validated MPS train entrypoint to the actual CosyVoice3 model loader.
 - [x] Integrate metrics/checkpoint/resume utilities into the MPS CosyVoice3 training path.
-- [x] Add a generic-loop MPS entrypoint that consumes real CosyVoice3 parquet rows and writes reusable-loop checkpoints/metrics; host performance verification remains a separate acceptance run.
+- [x] Run the generic loop against real CosyVoice3 parquet rows on host MPS (8 train/2 dev rows; checkpoint, state, and metrics verified).
 - [x] Validate real generated parquet schema and feature columns.
 - [x] Install/provide an MPS-capable runtime and local model assets; host probe passes on `pvs-mps`.
 - [x] Verify `compare` with real MPS-trained adapter output; CAMPPlus similarity `0.919853` recorded.
@@ -204,4 +204,4 @@ python -m mac_voice prepare --dataset <dataset> --output <prepared>
 
 ## Last verified result
 
-Host Terminal verification now also covers the real MPS path: 8-row train/2-row dev parquet epoch, checkpoint metrics, resume step, adapter-backed MPS synthesis, and CAMPPlus similarity comparison. The generic trainer still needs direct integration with real CosyVoice3 parquet batches; distribution signing/notarization remains credential-gated.
+Host Terminal verification now also covers the real MPS path: 8-row train/2-row dev parquet epochs through both the dedicated and generic loops, checkpoint metrics, resume step, adapter-backed MPS synthesis, and CAMPPlus similarity comparison. Distribution signing/notarization remains credential-gated.

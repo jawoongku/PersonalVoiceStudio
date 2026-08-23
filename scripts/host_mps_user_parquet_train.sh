@@ -9,6 +9,7 @@ TRAIN_LIST="${PVS_MPS_TRAIN_LIST:-$PROJECT_ROOT/data/my_voice_prepared/train/par
 DEV_LIST="${PVS_MPS_DEV_LIST:-$PROJECT_ROOT/data/my_voice_prepared/dev/parquet/data.list}"
 OUTPUT="${PVS_MPS_TRAIN_OUTPUT:-$PROJECT_ROOT/artifacts/runs/mps_user_epoch/adapter.pt}"
 JOB="${PVS_MPS_JOB:-}"
+GENERIC_LOOP="${PVS_MPS_GENERIC_LOOP:-0}"
 
 args=(python -m mac_voice mps-parquet-train \
   --train-data-list "$TRAIN_LIST" \
@@ -17,5 +18,8 @@ args=(python -m mac_voice mps-parquet-train \
   --output "$OUTPUT")
 if [[ -n "$JOB" ]]; then
   args+=(--job "$JOB")
+fi
+if [[ "$GENERIC_LOOP" == "1" ]]; then
+  args+=(--generic-loop)
 fi
 conda run -n cosyvoice "${args[@]}"
