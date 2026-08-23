@@ -5,5 +5,5 @@ let package = Package(
     name: "PersonalVoiceStudio",
     platforms: [.macOS(.v14)],
     products: [.executable(name: "PersonalVoiceStudio", targets: ["PersonalVoiceStudio"])],
-    targets: [.executableTarget(name: "PersonalVoiceStudio", path: ".")]
+    targets: [.executableTarget(name: "PersonalVoiceStudio", path: ".", exclude: ["Info.plist"])]
 )

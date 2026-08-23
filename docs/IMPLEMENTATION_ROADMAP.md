@@ -58,6 +58,7 @@
 - [x] AVAudioEngine 녹음 source 및 WAV 저장
 - [x] Python engine subprocess/API bridge (job/bridge-status 기반)
 - [x] microphone 권한 요청 흐름
+- [x] macOS microphone usage description manifest
 - [ ] `.app` 패키징
 
 ## Phase 5 — 품질 개선
