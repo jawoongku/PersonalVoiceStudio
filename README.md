@@ -57,7 +57,7 @@ conda run -n cosyvoice python -m mac_voice mps-doctor --json
 
 현재 이 Mac에서는 PyTorch 2.13.0이 macOS 26.5.2를 인식하지 못해 `os-runtime-mismatch`가 보고됩니다. PyTorch가 해당 macOS major를 명시적으로 지원하는 빌드로 교체되거나 지원되는 macOS에서 실행되기 전에는 MPS 학습을 PASS로 표시하지 않습니다.
 
-기존 환경을 변경하지 않고 후보 환경을 만들려면 다음 명령을 사용합니다. 기본값은 별도 `pvs-mps` 환경과 PyTorch 2.5.1이며, 실제 생성 전에는 dry-run으로 명령만 출력합니다. 현재 이 Mac에서는 2.5.1도 새 프로세스의 tensor probe를 통과하지 못했으므로 아직 MPS 지원 환경으로 확정하지 않았습니다.
+기존 환경을 변경하지 않고 후보 환경을 만들려면 다음 명령을 사용합니다. 기본값은 별도 `pvs-mps` 환경과 PyTorch 2.5.1이며, 실제 생성 전에는 dry-run으로 명령만 출력합니다. 현재 이 Mac에서는 PyTorch 2.5.1과 2.7.1 모두 새 프로세스의 tensor probe를 통과하지 못했으므로 아직 MPS 지원 환경으로 확정하지 않았습니다.
 
 ```bash
 make create-mps-env
