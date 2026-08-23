@@ -92,7 +92,7 @@
 - [x] MPS metrics JSONL에 current/driver memory 기록
 - [x] SwiftUI job 화면에 MPS driver memory 표시
 - [x] macOS 배포 서명·notarization 자격 사전 점검 스크립트
-- [ ] 장시간 학습 및 모델 관리
+- [x] 장시간 학습 및 모델 관리(epochs/steps/validation/resume·retention·manifest·job 상태)
 - [x] 장기 관리 기반: retention·manifest·job progress/cancel·checkpoint resume
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)
 - [x] 비파괴적 학습 run 보관 후보 계산 기반

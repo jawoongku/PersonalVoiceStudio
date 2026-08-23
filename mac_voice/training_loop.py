@@ -64,7 +64,7 @@ def fit(
     optimizer = build_optimizer(model, config)
     scheduler = None
     if resume_from is not None:
-        metadata = load_training_state(resume_from, optimizer=optimizer, scheduler=scheduler, map_location="cpu")
+        metadata = load_training_state(resume_from, optimizer=optimizer, scheduler=scheduler, map_location=device)
         start_step = int(metadata.get("step", start_step))
         start_epoch = int(metadata.get("epoch", start_epoch))
     metrics = MetricsLogger(output / "metrics.jsonl")

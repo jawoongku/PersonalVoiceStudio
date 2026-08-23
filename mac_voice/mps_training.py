@@ -187,6 +187,10 @@ def run_user_parquet_mps_train_generic(
     alpha: int = 4,
     progress: Callable[[int, dict[str, object]], None] | None = None,
     should_cancel: Callable[[], bool] | None = None,
+    max_epochs: int = 1,
+    max_steps: int | None = None,
+    validate_every: int = 1,
+    resume_from: str | Path | None = None,
 ) -> dict[str, object]:
     """Run the reusable training loop against real CosyVoice parquet rows on MPS."""
     import torch
@@ -204,6 +208,10 @@ def run_user_parquet_mps_train_generic(
     for rows in (train_rows, dev_rows):
         for row in rows:
             row.pop("utt", None)
+    if resume_from is not None:
+        resume_state = Path(resume_from).expanduser()
+        resume_adapter = resume_state.parent / "checkpoints" / "adapter_latest.pt"
+        load_adapter_checkpoint(llm, resume_adapter, map_location="cpu")
 
     def forward(batch):
         result = llm.forward(batch, device)
@@ -221,7 +229,10 @@ def run_user_parquet_mps_train_generic(
         output_dir=output_path,
         device=device,
         config=TrainerConfig(device="mps", learning_rate=1e-4, grad_clip=1.0),
-        max_epochs=1,
+        max_epochs=max_epochs,
+        max_steps=max_steps,
+        validate_every=validate_every,
+        resume_from=resume_from,
         progress=progress,
         should_cancel=should_cancel,
     )

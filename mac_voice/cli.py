@@ -198,6 +198,10 @@ def build_parser() -> argparse.ArgumentParser:
     mps_train.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
     mps_train.add_argument("--job", default=None, help="optional job.json to update during training")
     mps_train.add_argument("--generic-loop", action="store_true", help="use the reusable training loop with real CosyVoice3 parquet rows")
+    mps_train.add_argument("--epochs", type=int, default=1, help="generic-loop epoch count")
+    mps_train.add_argument("--max-steps", type=int, default=None, help="generic-loop maximum optimizer steps")
+    mps_train.add_argument("--validate-every", type=int, default=1, help="generic-loop validation interval in steps")
+    mps_train.add_argument("--resume-from", default=None, help="generic-loop training_state.pt to resume")
     mps_resume = subparsers.add_parser("mps-parquet-resume", help="resume one user parquet MPS step from adapter/state")
     mps_resume.add_argument("--data-list", required=True)
     mps_resume.add_argument("--model-dir", required=True)
@@ -470,7 +474,13 @@ def main(argv: list[str] | None = None) -> int:
                 progress = lambda step, metrics: update_job(args.job, "running", step=step, metrics=metrics)
             cancel_check = lambda: bool(args.job and read_job(args.job).get("status") == "cancelled")
             train_fn = run_user_parquet_mps_train_generic if args.generic_loop else run_user_parquet_mps_train
-            result = train_fn(args.train_data_list, args.dev_data_list, args.model_dir, args.output, args.upstream_root, progress=progress, should_cancel=cancel_check)
+            generic_options = {
+                "max_epochs": args.epochs,
+                "max_steps": args.max_steps,
+                "validate_every": args.validate_every,
+                "resume_from": args.resume_from,
+            } if args.generic_loop else {}
+            result = train_fn(args.train_data_list, args.dev_data_list, args.model_dir, args.output, args.upstream_root, progress=progress, should_cancel=cancel_check, **generic_options)
         except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
             if args.job:
                 try:
