@@ -71,6 +71,18 @@ python -m mac_voice parquet-train-job \
   --job artifacts/runs/parquet_job/job.json
 ```
 
+중단 후 저장된 adapter와 optimizer state를 이어서 검증하려면:
+
+```bash
+python -m mac_voice parquet-resume-job \
+  --data-list data/my_voice_prepared/train/parquet/data.list \
+  --adapter artifacts/runs/parquet_job/adapter.pt \
+  --state artifacts/runs/parquet_job/adapter.state.pt \
+  --model-dir "$COSYVOICE_MODEL_DIR" \
+  --output artifacts/runs/parquet_resume_job/adapter.pt \
+  --job artifacts/runs/parquet_resume_job/job.json
+```
+
 저장된 Voice Package를 점검합니다.
 
 ```bash
