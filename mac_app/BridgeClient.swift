@@ -23,6 +23,7 @@ struct RunEntry: Codable, Identifiable {
     let job_status: String?
     let checkpoint: String?
     let metrics: String?
+    let last_metrics: [String: Double]?
     var id: String { path }
 }
 
