@@ -152,6 +152,7 @@
 - [x] Tested latest PyTorch 2.13.0/torchaudio 2.11.0 in `pvs-mps`; this Codex execution context still reports `_mps_is_available=False`. A normal Terminal host probe remains required because PyTorch reports different MPS behavior inside Codex on the same host.
 - [x] Host Terminal probe passed: MPS tensor creation plus forward/backward/optimizer smoke succeeded on macOS 26.5.2.
 - [x] Host Terminal CosyVoice3 MPS baseline passed: Korean zero-shot output, 56,640 frames at 24 kHz mono, non-zero RMS.
+- [x] Host Terminal user parquet MPS batch passed: utt `0002`, finite loss `3.8925516605`, 96 LoRA matches, non-zero gradients, and optimizer step.
 - [x] Exposed MPS readiness, tensor probe, and action guidance through `bridge-status` and the SwiftUI shell; 67 tests pass.
 - [x] Locate/provision the core `Fun-CosyVoice3-0.5B` model assets without duplicating an existing copy.
 - [x] Implement and verify baseline MPS inference (LLM/Flow on MPS; HiFiGAN float64 F0 path on CPU).

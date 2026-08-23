@@ -21,6 +21,7 @@ from .narrate import run_narrate
 from .parquet import validate_data_list
 from .mps_smoke import run_mps_smoke
 from .mps_baseline import run_mps_baseline
+from .mps_training import run_user_parquet_mps_backward
 from .mps_runtime import probe as probe_mps_runtime, render as render_mps_runtime
 from .ui_gradio import launch_ui
 from .project import initialize_project
@@ -167,6 +168,10 @@ def build_parser() -> argparse.ArgumentParser:
     mps_baseline.add_argument("--reference", default=None)
     mps_baseline.add_argument("--reference-text", default=None)
     mps_baseline.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    mps_parquet = subparsers.add_parser("mps-parquet-backward", help="run one real user parquet batch on MPS")
+    mps_parquet.add_argument("--data-list", required=True)
+    mps_parquet.add_argument("--model-dir", required=True)
+    mps_parquet.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
     mps_doctor = subparsers.add_parser("mps-doctor", help="diagnose MPS runtime compatibility without changing the environment")
     mps_doctor.add_argument("--json", action="store_true", dest="as_json")
     inspect_model = subparsers.add_parser("inspect-model", help="inspect runtime LoRA target modules")
@@ -371,6 +376,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[ERROR] {exc}")
             return 1
         print(f"[OK] MPS baseline WAV: {output}")
+        return 0
+    if args.command == "mps-parquet-backward":
+        try:
+            result = run_user_parquet_mps_backward(args.data_list, args.model_dir, args.upstream_root)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(json.dumps(result, ensure_ascii=False))
         return 0
     if args.command == "ui":
         try:
