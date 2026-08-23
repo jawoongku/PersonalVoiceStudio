@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, inspect_recording, prepare_dataset_for_ui, register_recording, synthesize_for_ui, validate_dataset_for_ui
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, inspect_recording, prepare_dataset_for_ui, register_recording, synthesize_for_ui, training_preflight_for_ui, validate_dataset_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -51,3 +51,7 @@ class GradioPrototypeTests(unittest.TestCase):
     def test_prepare_dataset_reports_missing_directory(self):
         report = prepare_dataset_for_ui("/tmp/does-not-exist-personal-voice", "/tmp/prepared")
         self.assertIn("학습 데이터 준비 실패", report)
+
+    def test_training_preflight_reports_missing_config(self):
+        report = training_preflight_for_ui("/tmp/does-not-exist-training.yaml")
+        self.assertIn("설정 읽기 실패", report)

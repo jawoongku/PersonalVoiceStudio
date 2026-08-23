@@ -12,6 +12,8 @@ from .dataset import _pcm_stats, prepare_dataset, render_validation, validate_da
 from .catalog import list_voice_packages
 from .synth import run_synth
 from .history import append_tts_history, read_tts_history
+from .config import load_config, validate_training_config
+from .parquet import validate_data_list
 
 RECOMMENDED_SENTENCES = [
     "오늘 아침에는 평소보다 조금 일찍 일어났습니다.",
@@ -110,6 +112,30 @@ def prepare_dataset_for_ui(dataset_root: str, output_root: str) -> str:
     return f"준비 완료: {output_root}\ntrain={train_count}, dev={dev_count}"
 
 
+def training_preflight_for_ui(config_path: str) -> str:
+    try:
+        config = load_config(config_path)
+    except (OSError, RuntimeError, ValueError) as exc:
+        return f"설정 읽기 실패: {exc}"
+    errors = validate_training_config(config)
+    lines = [f"설정: {config_path}"]
+    if errors:
+        lines.extend(f"[ERROR] {error}" for error in errors)
+        return "\n".join(lines)
+    model_dir = config.get("model_dir") or config.get("model", {}).get("dir")
+    dataset_dir = config.get("dataset_dir")
+    lines.append(f"모델: {'사용 가능' if model_dir and Path(model_dir).is_dir() else '없음'} ({model_dir})")
+    if dataset_dir:
+        for split in ("train", "dev"):
+            data_list = Path(dataset_dir) / split / "parquet" / "data.list"
+            data_errors = validate_data_list(data_list, require_features=True)
+            lines.append(f"{split}: {'사용 가능' if not data_errors else '오류'}")
+            lines.extend(f"  [ERROR] {error}" for error in data_errors)
+    else:
+        lines.append("dataset_dir: 설정되지 않음")
+    return "\n".join(lines)
+
+
 def build_demo():
     try:
         import gradio as gr
@@ -142,6 +168,11 @@ def build_demo():
         prepare = gr.Button("학습 데이터 준비")
         prepare_report = gr.Textbox(label="준비 결과", lines=4)
         prepare.click(prepare_dataset_for_ui, inputs=[dataset_root, prepared_root], outputs=prepare_report)
+        gr.Markdown("## 학습 사전 점검")
+        training_config = gr.Textbox(label="학습 설정 파일", value="configs/my_voice.yaml")
+        preflight = gr.Button("학습 준비 상태 점검")
+        preflight_report = gr.Textbox(label="학습 사전 점검 결과", lines=8)
+        preflight.click(training_preflight_for_ui, inputs=training_config, outputs=preflight_report)
         gr.Markdown("## Voice Package TTS")
         voice_root = gr.Textbox(label="Voice Package 폴더", value="artifacts/voices")
         voice_choices = [item["path"] for item in list_voice_packages("artifacts/voices")]

@@ -62,6 +62,7 @@
 - [x] Added append-only TTS history and a UI refresh control for recent generations; 39 tests pass.
 - [x] Added UI-wide dataset validation for WAV/transcript completeness; 40 tests pass.
 - [x] Added UI action to normalize recordings and create train/dev manifests via `prepare`; 41 tests pass.
+- [x] Added UI training preflight for config, model directory, and feature parquet readiness; 42 tests pass.
 
 ## In progress
 
