@@ -60,6 +60,7 @@
 - [x] microphone 권한 요청 흐름
 - [x] macOS microphone usage description manifest
 - [ ] `.app` 패키징
+- [x] `.app` 번들 생성 스크립트 (release build + Info.plist)
 
 ## Phase 5 — 품질 개선
 

@@ -104,6 +104,7 @@
 - [x] Added AVAudioEngine microphone recording with WAV output to the SwiftUI shell; SwiftPM build remains successful.
 - [x] Added macOS microphone permission request before AVAudioEngine start; filesystem permission packaging remains pending.
 - [x] Added `mac_app/Info.plist` with `NSMicrophoneUsageDescription` for app-bundle permission prompts.
+- [x] Added and ran `scripts/build_macos_app.sh` to create a release `.app` bundle; signing/notarization remains pending.
 
 ## In progress
 
