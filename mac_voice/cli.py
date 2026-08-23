@@ -22,7 +22,7 @@ from .ui_gradio import launch_ui
 from .project import initialize_project
 from .jobs import read_job
 from .catalog import list_voice_packages
-from .jobs import create_job
+from .jobs import create_job, update_job
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
 
 
@@ -40,6 +40,11 @@ def build_parser() -> argparse.ArgumentParser:
     job_create.add_argument("--output", required=True, help="job output directory")
     job_create.add_argument("--command", dest="job_command", default="train")
     job_create.add_argument("--config", required=True)
+    job_update = subparsers.add_parser("job-update", help="update a training job status")
+    job_update.add_argument("--job", required=True)
+    job_update.add_argument("--status", required=True, choices=("queued", "running", "completed", "failed", "cancelled"))
+    job_update.add_argument("--step", type=int, default=None)
+    job_update.add_argument("--error", default=None)
     doctor = subparsers.add_parser("doctor", help="inspect the local Mac/CosyVoice environment")
     doctor.add_argument("--model-dir", default=None, help="CosyVoice3 model directory")
     doctor.add_argument("--upstream-root", default=None, help="CosyVoice checkout directory")
@@ -175,6 +180,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[ERROR] {exc}")
             return 1
         print(f"[OK] job: {path}")
+        return 0
+    if args.command == "job-update":
+        fields = {}
+        if args.step is not None:
+            fields["step"] = args.step
+        if args.error is not None:
+            fields["error"] = args.error
+        try:
+            job = update_job(args.job, args.status, **fields)
+        except (OSError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] status: {job['status']}")
         return 0
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)

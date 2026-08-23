@@ -53,6 +53,12 @@ python -m mac_voice job-status --job artifacts/runs/my_voice/job.json
 python -m mac_voice job-create --output artifacts/runs/my_voice --config configs/my_voice.yaml
 ```
 
+작업 실행 중 상태를 갱신하려면:
+
+```bash
+python -m mac_voice job-update --job artifacts/runs/my_voice/job.json --status running --step 2
+```
+
 저장된 Voice Package를 점검합니다.
 
 ```bash

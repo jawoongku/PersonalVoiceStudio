@@ -65,6 +65,7 @@
 - [x] Added UI training preflight for config, model directory, and feature parquet readiness; 42 tests pass.
 - [x] Added UI job-status refresh for filesystem-backed training jobs; 43 tests pass.
 - [x] Added `job-create` CLI for queued training metadata; verified create/status lifecycle.
+- [x] Added `job-update` CLI for status, step, and error transitions.
 
 ## In progress
 
