@@ -95,7 +95,7 @@
 - [x] Added dataset-aware next-sentence recommendation to the recording UI; 57 tests pass.
 - [x] Comparison reports now explicitly distinguish audio statistics from unavailable speaker-similarity scoring.
 - [x] Added `list-voices --json` for machine-readable Voice Package catalogs.
-- [x] Added read-only Python bridge primitives for job snapshots and Voice Package catalogs; 59 tests pass.
+- [x] Added read-only Python bridge primitives for job snapshots and Voice Package catalogs; 59 tests passed at introduction.
 - [x] Added `bridge-status` CLI for one-call combined job/catalog JSON snapshots.
 - [x] Updated roadmap to reflect the implemented Python subprocess/JSON bridge; SwiftUI shell remains separate.
 - [x] Added parse-checked SwiftUI shell sources in `mac_app/` for bridge status and Voice Package listing.
@@ -110,7 +110,7 @@
 - [x] Added app bundle smoke-check script and `make check-app` target.
 - [x] Integrated release `.app` build and bundle smoke-check into `scripts/verify_all.sh`.
 - [x] Extended Swift CI to build and smoke-check the `.app` bundle.
-- [x] Added `list-runs` for local training run, job status, checkpoint, and metrics discovery; 62 tests pass.
+- [x] Added `list-runs` for local training run, job status, checkpoint, and metrics discovery; 62 tests passed at introduction.
 - [x] Extended the Python/Swift bridge snapshot with training run catalog data.
 - [x] SwiftUI run list now shows checkpoint paths for model management handoff.
 - [x] SwiftUI run list also shows metrics file paths.
