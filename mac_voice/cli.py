@@ -26,6 +26,7 @@ from .jobs import read_job
 from .catalog import list_voice_packages
 from .bridge import job_snapshot, voice_catalog
 from .similarity import cosine_similarity
+from .runs import list_runs
 from .jobs import create_job, update_job
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
 
@@ -50,6 +51,9 @@ def build_parser() -> argparse.ArgumentParser:
     similarity.add_argument("--right", help="comma-separated float vector")
     similarity.add_argument("--left-file", help="JSON array embedding file")
     similarity.add_argument("--right-file", help="JSON array embedding file")
+    runs = subparsers.add_parser("list-runs", help="list local training runs and artifacts")
+    runs.add_argument("--root", default="artifacts/runs")
+    runs.add_argument("--json", action="store_true", dest="as_json")
     job_create = subparsers.add_parser("job-create", help="create a queued training job metadata file")
     job_create.add_argument("--output", required=True, help="job output directory")
     job_create.add_argument("--command", dest="job_command", default="train")
@@ -254,6 +258,14 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, json.JSONDecodeError, ValueError, TypeError) as exc:
             print(f"[ERROR] {exc}")
             return 1
+        return 0
+    if args.command == "list-runs":
+        rows = list_runs(args.root)
+        if args.as_json:
+            print(json.dumps(rows, ensure_ascii=False))
+        else:
+            for row in rows:
+                print(f"[{row['job_status'] or 'unknown'}] {row['name']} checkpoint={row['checkpoint'] or '-'}")
         return 0
     if args.command == "job-create":
         try:

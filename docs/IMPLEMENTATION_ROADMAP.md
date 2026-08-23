@@ -73,3 +73,4 @@
 - [x] 화자 임베딩 cosine similarity 계산 계약 (임베딩 추출기 연결은 후속)
 - [ ] MPS 호환 runtime
 - [ ] 장시간 학습 및 모델 관리
+- [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)
