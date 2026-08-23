@@ -86,6 +86,7 @@
 - [x] Synthesized Korean text with the verified package: `artifacts/my_voice_cpu_train20_verified.wav` (24kHz mono, 5.84s).
 - [x] Ran base zero-shot vs verified adapter comparison: both outputs non-silent 24kHz mono; report saved at `artifacts/compare_verified/comparison.json`.
 - [x] Added UI button to start background CPU parquet training with job metadata; status/metrics panels monitor the run; 54 tests pass.
+- [x] Background UI training now persists combined stdout/stderr to `job.log` beside `job.json`.
 
 ## In progress
 

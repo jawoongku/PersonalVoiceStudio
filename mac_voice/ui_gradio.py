@@ -196,12 +196,15 @@ def cancel_job_for_ui(job_path: str) -> str:
 
 def start_training_job_for_ui(train_data: str, dev_data: str, model_dir: str, output: str, job_path: str, steps: int = 2) -> str:
     try:
-        create_job(Path(job_path).expanduser().parent, command="parquet-train-job", config="ui")
+        job_file = Path(job_path).expanduser()
+        create_job(job_file.parent, command="parquet-train-job", config="ui")
         command = [sys.executable, "-m", "mac_voice", "parquet-train-job", "--train-data-list", train_data, "--dev-data-list", dev_data, "--model-dir", model_dir, "--output", output, "--job", job_path, "--steps", str(int(steps))]
-        subprocess.Popen(command, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        log_path = job_file.parent / "job.log"
+        with log_path.open("a", encoding="utf-8") as log:
+            subprocess.Popen(command, start_new_session=True, stdout=log, stderr=subprocess.STDOUT)
     except (OSError, FileExistsError, ValueError) as exc:
         return f"학습 작업을 시작할 수 없습니다: {exc}"
-    return f"학습 작업을 시작했습니다.\njob: {job_path}"
+    return f"학습 작업을 시작했습니다.\njob: {job_path}\nlog: {log_path}"
 
 
 def narrate_for_ui(voice_root: str, voice_name: str, text: str, model_dir: str, output: str, max_chars: int = 180) -> tuple[str, str | None]:
