@@ -150,6 +150,8 @@ python -m mac_voice retention-plan --root artifacts/runs --keep 3 --json
 python -m mac_voice artifact-manifest --root artifacts/voices/my_voice_mps_epoch
 python -m mac_voice artifact-verify --manifest artifacts/voices/my_voice_mps_epoch/artifact-manifest.json
 ```
+
+MPS 전체 학습을 `job.json`과 연결하려면 `PVS_MPS_JOB=/path/to/job.json scripts/host_mps_user_parquet_train.sh`로 실행합니다. 실행 중·완료·실패 상태와 metrics가 자동 기록됩니다.
 자동화에서는 `python -m mac_voice list-voices --root artifacts/voices --json`을 사용할 수 있습니다.
 SwiftUI 브리지는 `python -m mac_voice bridge-status --job <job.json> --voices artifacts/voices`로 통합 상태를 읽을 수 있습니다.
 임베딩 벡터 비교는 `python -m mac_voice similarity --left 1,2 --right 1,2`로 실행할 수 있습니다.

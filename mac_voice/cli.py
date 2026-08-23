@@ -189,6 +189,7 @@ def build_parser() -> argparse.ArgumentParser:
     mps_train.add_argument("--model-dir", required=True)
     mps_train.add_argument("--output", required=True)
     mps_train.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    mps_train.add_argument("--job", default=None, help="optional job.json to update during training")
     mps_resume = subparsers.add_parser("mps-parquet-resume", help="resume one user parquet MPS step from adapter/state")
     mps_resume.add_argument("--data-list", required=True)
     mps_resume.add_argument("--model-dir", required=True)
@@ -446,10 +447,19 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "mps-parquet-train":
         try:
+            if args.job:
+                update_job(args.job, "running")
             result = run_user_parquet_mps_train(args.train_data_list, args.dev_data_list, args.model_dir, args.output, args.upstream_root)
         except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
+            if args.job:
+                try:
+                    update_job(args.job, "failed", error=str(exc))
+                except (OSError, ValueError):
+                    pass
             print(f"[ERROR] {exc}")
             return 1
+        if args.job:
+            update_job(args.job, "completed", step=result.get("steps"), metrics=result)
         print(json.dumps(result, ensure_ascii=False))
         return 0
     if args.command == "mps-parquet-resume":
