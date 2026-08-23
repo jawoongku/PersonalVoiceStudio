@@ -20,6 +20,7 @@ from .compare import run_comparison
 from .narrate import run_narrate
 from .parquet import validate_data_list
 from .mps_smoke import run_mps_smoke
+from .mps_runtime import probe as probe_mps_runtime, render as render_mps_runtime
 from .ui_gradio import launch_ui
 from .project import initialize_project
 from .jobs import read_job
@@ -152,6 +153,8 @@ def build_parser() -> argparse.ArgumentParser:
     parquet.add_argument("--data-list", required=True)
     parquet.add_argument("--require-features", action="store_true")
     mps_smoke = subparsers.add_parser("mps-smoke", help="run a real MPS forward/backward/optimizer probe")
+    mps_doctor = subparsers.add_parser("mps-doctor", help="diagnose MPS runtime compatibility without changing the environment")
+    mps_doctor.add_argument("--json", action="store_true", dest="as_json")
     inspect_model = subparsers.add_parser("inspect-model", help="inspect runtime LoRA target modules")
     inspect_model.add_argument("--model-dir", default=None)
     inspect_model.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
@@ -333,6 +336,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)
+    if args.command == "mps-doctor":
+        report = probe_mps_runtime()
+        print(json.dumps(report, ensure_ascii=False) if args.as_json else render_mps_runtime(report))
+        return 0 if report["status"] == "ready" else 1
     if args.command == "ui":
         try:
             launch_ui()

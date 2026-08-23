@@ -112,6 +112,7 @@
 - [x] Extended Swift CI to build and smoke-check the `.app` bundle.
 - [x] Added `list-runs` for local training run, job status, checkpoint, and metrics discovery; 62 tests passed at introduction.
 - [x] Added non-destructive retention planning for training runs; no automatic deletion is performed; 64 tests pass.
+- [x] Added `mps-doctor` with a real tensor probe and actionable macOS/PyTorch runtime mismatch reporting; 66 tests pass.
 - [x] Extended the Python/Swift bridge snapshot with training run catalog data.
 - [x] SwiftUI run list now shows checkpoint paths for model management handoff.
 - [x] SwiftUI run list also shows metrics file paths.
@@ -143,6 +144,7 @@
 ## In progress
 
 - [ ] Establish an MPS-capable Python environment.
+- [x] Added a non-mutating MPS environment preflight; the current PyTorch/macOS mismatch is now explicitly classified as `os-runtime-mismatch`.
 - [x] Locate/provision the core `Fun-CosyVoice3-0.5B` model assets without duplicating an existing copy.
 - [ ] Implement and verify baseline MPS inference.
 - [ ] Verify baseline with a real local CosyVoice3 model and non-silent WAV.

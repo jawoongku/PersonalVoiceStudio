@@ -75,3 +75,4 @@
 - [ ] 장시간 학습 및 모델 관리
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)
 - [x] 비파괴적 학습 run 보관 후보 계산 기반
+- [x] 실제 MPS tensor probe와 OS/runtime 불일치 진단(`mps-doctor`)
