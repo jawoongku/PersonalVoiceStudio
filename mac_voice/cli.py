@@ -35,6 +35,7 @@ from .retention import retention_plan
 from .artifacts import create_manifest, verify_manifest
 from .jobs import create_job, update_job
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
+from .voice_creation import create_voice_package_from_dataset
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -133,6 +134,13 @@ def build_parser() -> argparse.ArgumentParser:
     package.add_argument("--speaker-id", default="owner")
     package.add_argument("--language", default="ko")
     package.add_argument("--sample-rate", type=int, default=24000)
+    create_voice = subparsers.add_parser("create-voice", help="prepare, train, and package one selected voice dataset")
+    create_voice.add_argument("--dataset", required=True)
+    create_voice.add_argument("--name", required=True)
+    create_voice.add_argument("--model-dir", required=True)
+    create_voice.add_argument("--output-root", default="artifacts/runs")
+    create_voice.add_argument("--voices-root", default="artifacts/voices")
+    create_voice.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
     train = subparsers.add_parser("train", help="validate and run the local LoRA trainer")
     train.add_argument("--config", required=True)
     train.add_argument("--max-steps", type=int, default=None)
@@ -634,6 +642,17 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[ERROR] {exc}")
             return 1
         print(f"[OK] Voice Package: {destination}")
+        return 0
+    if args.command == "create-voice":
+        try:
+            result = create_voice_package_from_dataset(
+                args.dataset, args.name, args.model_dir, args.output_root, args.voices_root, args.upstream_root,
+                progress=lambda message: print(f"[STAGE] {message}", flush=True),
+            )
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(json.dumps(result, ensure_ascii=False))
         return 0
     if args.command == "train":
         try:

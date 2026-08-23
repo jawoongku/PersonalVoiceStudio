@@ -106,4 +106,17 @@ enum BridgeClient {
         process.waitUntilExit()
         guard process.terminationStatus == 0 else { throw failure(process, stderr: stderr) }
     }
+
+    static func createVoiceModel(dataset: String, name: String, modelDirectory: String, workingDirectory: String) throws {
+        let process = Process()
+        configure(process, workingDirectory: workingDirectory)
+        let python = process.executableURL?.path ?? "/usr/bin/env"
+        let args = ["-m", "mac_voice", "create-voice", "--dataset", dataset, "--name", name, "--model-dir", modelDirectory]
+        process.arguments = python == "/usr/bin/env" ? ["python3"] + args : args
+        let stderr = Pipe()
+        process.standardError = stderr
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else { throw failure(process, stderr: stderr) }
+    }
 }

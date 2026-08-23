@@ -204,12 +204,11 @@ struct ContentView: View {
                         Text("선택 \(selectedRecordings.count)개").font(.caption).foregroundStyle(.secondary)
                         TextField("모델 이름", text: $modelName).textFieldStyle(.roundedBorder)
                         if isCreatingDataset {
-                            ProgressView(value: datasetProgress) {
+                            ProgressView {
                                 Text(datasetProgressText).font(.caption)
                             }
-                            .progressViewStyle(.linear)
                         }
-                        Button("선택 파일로 모델 데이터 만들기", action: createSelectedDataset)
+                        Button("선택 파일로 모델 만들기", action: createSelectedDataset)
                             .disabled(isCreatingDataset || selectedRecordings.isEmpty || sanitizedModelName.isEmpty)
                     }
                     GroupBox("생성된 모델") {
@@ -642,9 +641,24 @@ struct ContentView: View {
                 }
                 try output.write(to: transcript, atomically: true, encoding: .utf8)
                 DispatchQueue.main.async {
-                    isCreatingDataset = false
-                    recordingValidation = "모델 \(displayName) 데이터 생성 완료: \(sources.count)개 · \(root.path)"
-                    refreshModels()
+                    datasetProgressText = "feature/parquet·LoRA 학습·Voice Package 생성 중…"
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        do {
+                            let modelPath = ProcessInfo.processInfo.environment["PVS_MODEL_DIR"] ?? "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+                            try BridgeClient.createVoiceModel(dataset: root.path, name: safeName, modelDirectory: modelPath, workingDirectory: project)
+                            DispatchQueue.main.async {
+                                isCreatingDataset = false
+                                datasetProgressText = "완료"
+                                recordingValidation = "모델 \(displayName) 생성 완료: artifacts/voices/\(safeName)"
+                                refreshModels(); refresh()
+                            }
+                        } catch {
+                            DispatchQueue.main.async {
+                                isCreatingDataset = false
+                                errorMessage = "모델 생성에 실패했습니다. \(error.localizedDescription)"
+                            }
+                        }
+                    }
                 }
             } catch {
                 DispatchQueue.main.async {
