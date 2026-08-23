@@ -17,9 +17,18 @@ struct JobSnapshot: Codable {
     let package: String?
 }
 
+struct RunEntry: Codable, Identifiable {
+    let name: String
+    let path: String
+    let job_status: String?
+    let checkpoint: String?
+    var id: String { path }
+}
+
 struct BridgeSnapshot: Codable {
     let job: JobSnapshot
     let voices: [VoiceEntry]
+    let runs: [RunEntry]
 }
 
 enum BridgeClient {
@@ -27,9 +36,8 @@ enum BridgeClient {
         let process = Process()
         let python = ProcessInfo.processInfo.environment["PVS_PYTHON"] ?? "/usr/bin/env"
         process.executableURL = URL(fileURLWithPath: python)
-        process.arguments = python == "/usr/bin/env"
-            ? ["python3", "-m", "mac_voice", "bridge-status", "--job", job, "--voices", voices]
-            : ["-m", "mac_voice", "bridge-status", "--job", job, "--voices", voices]
+        let args = ["-m", "mac_voice", "bridge-status", "--job", job, "--voices", voices]
+        process.arguments = python == "/usr/bin/env" ? ["python3"] + args : args
         process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
         let pipe = Pipe()
         process.standardOutput = pipe

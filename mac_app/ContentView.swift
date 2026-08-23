@@ -21,6 +21,10 @@ struct ContentView: View {
                 List(snapshot.voices) { voice in
                     HStack { Text(voice.name); Spacer(); Text(voice.valid ? "사용 가능" : "오류") }
                 }
+                Text("학습 runs: \(snapshot.runs.count)")
+                List(snapshot.runs) { run in
+                    HStack { Text(run.name); Spacer(); Text(run.job_status ?? "unknown") }
+                }
             } else if let errorMessage {
                 Text(errorMessage).foregroundStyle(.red)
             } else {

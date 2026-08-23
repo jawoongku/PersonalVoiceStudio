@@ -24,7 +24,7 @@ from .ui_gradio import launch_ui
 from .project import initialize_project
 from .jobs import read_job
 from .catalog import list_voice_packages
-from .bridge import job_snapshot, voice_catalog
+from .bridge import job_snapshot, run_catalog, voice_catalog
 from .similarity import cosine_similarity
 from .runs import list_runs
 from .jobs import create_job, update_job
@@ -46,6 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     bridge_status = subparsers.add_parser("bridge-status", help="emit combined job and Voice Package JSON")
     bridge_status.add_argument("--job", required=True)
     bridge_status.add_argument("--voices", default="artifacts/voices")
+    bridge_status.add_argument("--runs", default="artifacts/runs")
     similarity = subparsers.add_parser("similarity", help="calculate cosine similarity for two embedding vectors")
     similarity.add_argument("--left", help="comma-separated float vector")
     similarity.add_argument("--right", help="comma-separated float vector")
@@ -236,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "bridge-status":
         try:
-            payload = {"job": job_snapshot(args.job), "voices": voice_catalog(args.voices)}
+            payload = {"job": job_snapshot(args.job), "voices": voice_catalog(args.voices), "runs": run_catalog(args.runs)}
         except (OSError, ValueError) as exc:
             print(f"[ERROR] {exc}")
             return 1

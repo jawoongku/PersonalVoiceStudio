@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .catalog import list_voice_packages
 from .jobs import read_job
+from .runs import list_runs
 
 
 def job_snapshot(path: str) -> dict:
@@ -12,3 +13,7 @@ def job_snapshot(path: str) -> dict:
 
 def voice_catalog(root: str) -> list[dict]:
     return list_voice_packages(root)
+
+
+def run_catalog(root: str) -> list[dict]:
+    return list_runs(root)
