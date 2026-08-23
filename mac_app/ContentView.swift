@@ -28,6 +28,8 @@ struct ContentView: View {
                         if let checkpoint = run.checkpoint { Text(checkpoint).font(.caption).foregroundStyle(.secondary) }
                         if let metrics = run.metrics { Text(metrics).font(.caption2).foregroundStyle(.secondary) }
                         if let values = run.last_metrics, let train = values["train_loss"] { Text("train loss: \(train)").font(.caption2) }
+                        if let values = run.last_metrics, let val = values["val_loss"] { Text("val loss: \(val)").font(.caption2) }
+                        if let values = run.last_metrics, let lr = values["learning_rate"] { Text("learning rate: \(lr)").font(.caption2) }
                     }
                 }
             } else if let errorMessage {
