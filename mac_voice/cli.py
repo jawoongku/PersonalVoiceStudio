@@ -25,6 +25,7 @@ from .project import initialize_project
 from .jobs import read_job
 from .catalog import list_voice_packages
 from .bridge import job_snapshot, voice_catalog
+from .similarity import cosine_similarity
 from .jobs import create_job, update_job
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
 
@@ -44,6 +45,9 @@ def build_parser() -> argparse.ArgumentParser:
     bridge_status = subparsers.add_parser("bridge-status", help="emit combined job and Voice Package JSON")
     bridge_status.add_argument("--job", required=True)
     bridge_status.add_argument("--voices", default="artifacts/voices")
+    similarity = subparsers.add_parser("similarity", help="calculate cosine similarity for two embedding vectors")
+    similarity.add_argument("--left", required=True, help="comma-separated float vector")
+    similarity.add_argument("--right", required=True, help="comma-separated float vector")
     job_create = subparsers.add_parser("job-create", help="create a queued training job metadata file")
     job_create.add_argument("--output", required=True, help="job output directory")
     job_create.add_argument("--command", dest="job_command", default="train")
@@ -231,6 +235,15 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[ERROR] {exc}")
             return 1
         print(json.dumps(payload, ensure_ascii=False))
+        return 0
+    if args.command == "similarity":
+        try:
+            left = [float(value) for value in args.left.split(",") if value.strip()]
+            right = [float(value) for value in args.right.split(",") if value.strip()]
+            print(f"{cosine_similarity(left, right):.6f}")
+        except (ValueError, TypeError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
         return 0
     if args.command == "job-create":
         try:
