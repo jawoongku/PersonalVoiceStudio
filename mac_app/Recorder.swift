@@ -7,6 +7,10 @@ final class Recorder: ObservableObject {
     private let engine = AVAudioEngine()
     private var file: AVAudioFile?
 
+    func requestMicrophonePermission(_ completion: @escaping (Bool) -> Void) {
+        AVCaptureDevice.requestAccess(for: .audio, completionHandler: completion)
+    }
+
     func start(to url: URL) throws {
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)

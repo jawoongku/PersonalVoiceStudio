@@ -27,7 +27,12 @@ struct ContentView: View {
                 if recorder.isRecording { recorder.stop() }
                 else {
                     let url = URL(fileURLWithPath: projectDirectory).appendingPathComponent("artifacts/ui_recording.wav")
-                    do { try recorder.start(to: url) } catch { errorMessage = "녹음 오류: \(error.localizedDescription)" }
+                    recorder.requestMicrophonePermission { granted in
+                        DispatchQueue.main.async {
+                            guard granted else { errorMessage = "마이크 권한이 필요합니다."; return }
+                            do { try recorder.start(to: url) } catch { errorMessage = "녹음 오류: \(error.localizedDescription)" }
+                        }
+                    }
                 }
             }
             if let output = recorder.lastOutput { Text("녹음 파일: \(output.path)").font(.caption) }

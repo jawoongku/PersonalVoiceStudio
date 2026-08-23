@@ -102,6 +102,7 @@
 - [x] Added and validated a Swift Package manifest for opening the shell in Xcode or SwiftPM.
 - [x] Built the macOS SwiftUI executable successfully with `swift build`.
 - [x] Added AVAudioEngine microphone recording with WAV output to the SwiftUI shell; SwiftPM build remains successful.
+- [x] Added macOS microphone permission request before AVAudioEngine start; filesystem permission packaging remains pending.
 
 ## In progress
 
