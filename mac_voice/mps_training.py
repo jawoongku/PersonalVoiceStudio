@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from .baseline import _load_upstream
+from .checkpoint import load_adapter_checkpoint, save_adapter_checkpoint
 from .lora import freeze_base_parameters, inject_lora, trainable_parameters, validate_gradients
 from .trainer_mps import move_batch, resolve_device
+from .training_state import load_training_state, save_training_state
 
 
 def _read_batch(data_list: str | Path, tokenizer, allowed_special, torch):
@@ -157,3 +159,41 @@ def run_user_parquet_mps_train(
     checkpoint = save_adapter_checkpoint(llm, output_path, step=len(train_rows), epoch=0, val_loss=dev_loss_value, config={"device": "mps", "rank": rank, "alpha": alpha, "train_rows": len(train_rows)})
     state_path = save_training_state(output_path.with_suffix(".state.pt"), optimizer=optimizer, scheduler=None, step=len(train_rows), epoch=0, config={"device": "mps", "rank": rank, "alpha": alpha})
     return {"status": "ok", "device": str(device), "train_rows": len(train_rows), "dev_rows": len(dev_rows), "steps": len(train_rows), "train_loss": last_loss, "dev_loss": dev_loss_value, "checkpoint": str(checkpoint), "state": str(state_path), "metrics": str(output_path.with_suffix(".metrics.jsonl")), "matched_modules": len(matched), "trainable": stats.trainable}
+
+
+def run_user_parquet_mps_resume(
+    data_list: str | Path,
+    model_dir: str | Path,
+    adapter: str | Path,
+    state: str | Path,
+    output: str | Path,
+    upstream_root: str | Path = "/Users/jawoongku/CosyVoice",
+) -> dict[str, object]:
+    import torch
+
+    device = resolve_device("mps")
+    module = _load_upstream(upstream_root)
+    model = module.AutoModel(model_dir=str(Path(model_dir).expanduser()), load_trt=False, fp16=False)
+    llm, matched = inject_lora(model.model.llm, ("q_proj", "k_proj", "v_proj", "o_proj"), rank=2, alpha=4, dropout=0.0)
+    stats = freeze_base_parameters(llm)
+    adapter_meta = load_adapter_checkpoint(llm, adapter, map_location="cpu")
+    llm.to(device).train()
+    optimizer = torch.optim.AdamW(trainable_parameters(llm), lr=1e-4)
+    state_meta = load_training_state(state, optimizer=optimizer, scheduler=None, map_location=device)
+    start_step = int(state_meta.get("step", adapter_meta.get("step", 0)))
+    tokenizer = model.frontend.tokenizer
+    row = _read_batch(data_list, tokenizer, model.frontend.allowed_special, torch)
+    utt = row.pop("utt")
+    optimizer.zero_grad(set_to_none=True)
+    loss = llm.forward(move_batch(row, device), device).get("loss")
+    if loss is None or not torch.isfinite(loss).item():
+        raise FloatingPointError("MPS resume loss is non-finite")
+    loss.backward()
+    lora_ok, frozen_ok, problems = validate_gradients(llm)
+    if not lora_ok or not frozen_ok:
+        raise RuntimeError("MPS resume gradient validation failed: " + "; ".join(problems))
+    optimizer.step()
+    output_path = Path(output).expanduser()
+    checkpoint = save_adapter_checkpoint(llm, output_path, step=start_step + 1, epoch=int(state_meta.get("epoch", 0)), val_loss=None, config={"device": "mps", "resumed_from": str(adapter)})
+    state_path = save_training_state(output_path.with_suffix(".state.pt"), optimizer=optimizer, scheduler=None, step=start_step + 1, epoch=int(state_meta.get("epoch", 0)), config={"device": "mps", "resumed_from": str(state)})
+    return {"status": "ok", "device": str(device), "utt": utt, "start_step": start_step, "step": start_step + 1, "loss": float(loss.detach().cpu().item()), "checkpoint": str(checkpoint), "state": str(state_path), "matched_modules": len(matched), "trainable": stats.trainable}

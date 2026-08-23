@@ -21,7 +21,7 @@ from .narrate import run_narrate
 from .parquet import validate_data_list
 from .mps_smoke import run_mps_smoke
 from .mps_baseline import run_mps_baseline
-from .mps_training import run_user_parquet_mps_backward, run_user_parquet_mps_train
+from .mps_training import run_user_parquet_mps_backward, run_user_parquet_mps_resume, run_user_parquet_mps_train
 from .mps_runtime import probe as probe_mps_runtime, render as render_mps_runtime
 from .ui_gradio import launch_ui
 from .project import initialize_project
@@ -178,6 +178,13 @@ def build_parser() -> argparse.ArgumentParser:
     mps_train.add_argument("--model-dir", required=True)
     mps_train.add_argument("--output", required=True)
     mps_train.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    mps_resume = subparsers.add_parser("mps-parquet-resume", help="resume one user parquet MPS step from adapter/state")
+    mps_resume.add_argument("--data-list", required=True)
+    mps_resume.add_argument("--model-dir", required=True)
+    mps_resume.add_argument("--adapter", required=True)
+    mps_resume.add_argument("--state", required=True)
+    mps_resume.add_argument("--output", required=True)
+    mps_resume.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
     mps_doctor = subparsers.add_parser("mps-doctor", help="diagnose MPS runtime compatibility without changing the environment")
     mps_doctor.add_argument("--json", action="store_true", dest="as_json")
     inspect_model = subparsers.add_parser("inspect-model", help="inspect runtime LoRA target modules")
@@ -394,6 +401,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "mps-parquet-train":
         try:
             result = run_user_parquet_mps_train(args.train_data_list, args.dev_data_list, args.model_dir, args.output, args.upstream_root)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(json.dumps(result, ensure_ascii=False))
+        return 0
+    if args.command == "mps-parquet-resume":
+        try:
+            result = run_user_parquet_mps_resume(args.data_list, args.model_dir, args.adapter, args.state, args.output, args.upstream_root)
         except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
             print(f"[ERROR] {exc}")
             return 1
