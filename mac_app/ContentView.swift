@@ -23,6 +23,9 @@ struct ContentView: View {
     @State private var models: [URL] = []
     @State private var renameModel: URL?
     @State private var renameValue = ""
+    @State private var isCreatingDataset = false
+    @State private var datasetProgress = 0.0
+    @State private var datasetProgressText = ""
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
 
@@ -194,8 +197,14 @@ struct ContentView: View {
                         }
                         Text("선택 \(selectedRecordings.count)개").font(.caption).foregroundStyle(.secondary)
                         TextField("모델 이름", text: $modelName).textFieldStyle(.roundedBorder)
+                        if isCreatingDataset {
+                            ProgressView(value: datasetProgress) {
+                                Text(datasetProgressText).font(.caption)
+                            }
+                            .progressViewStyle(.linear)
+                        }
                         Button("선택 파일로 모델 데이터 만들기", action: createSelectedDataset)
-                            .disabled(selectedRecordings.isEmpty || sanitizedModelName.isEmpty)
+                            .disabled(isCreatingDataset || selectedRecordings.isEmpty || sanitizedModelName.isEmpty)
                     }
                     GroupBox("생성된 모델") {
                         if models.isEmpty { Text("아직 생성된 모델이 없습니다.").foregroundStyle(.secondary) }
@@ -578,28 +587,50 @@ struct ContentView: View {
     }
 
     private func createSelectedDataset() {
-        let root = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/models/\(sanitizedModelName)", isDirectory: true)
-        let raw = root.appendingPathComponent("raw", isDirectory: true)
-        let transcript = root.appendingPathComponent("transcripts.csv")
-        do {
-            try FileManager.default.createDirectory(at: raw, withIntermediateDirectories: true)
-            let sourceTranscript = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice/transcripts.csv")
-            let sourceLines = (try? String(contentsOf: sourceTranscript, encoding: .utf8).split(separator: "\n").map(String.init)) ?? []
-            var output = "filename,text\n"
-            for source in selectedRecordings.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-                let destination = raw.appendingPathComponent(source.lastPathComponent)
-                if FileManager.default.fileExists(atPath: destination.path) { try FileManager.default.removeItem(at: destination) }
-                try FileManager.default.copyItem(at: source, to: destination)
-                let prefix = "\"\(source.lastPathComponent)\","
-                if let line = sourceLines.first(where: { $0.hasPrefix(prefix) }) {
+        let sources = selectedRecordings.sorted { $0.lastPathComponent < $1.lastPathComponent }
+        let safeName = sanitizedModelName
+        let displayName = modelName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let project = projectDirectory
+        isCreatingDataset = true
+        datasetProgress = 0
+        datasetProgressText = "선택 파일과 transcript 확인 중…"
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let root = URL(fileURLWithPath: project).appendingPathComponent("data/models/\(safeName)", isDirectory: true)
+                let raw = root.appendingPathComponent("raw", isDirectory: true)
+                let transcript = root.appendingPathComponent("transcripts.csv")
+                let sourceTranscript = URL(fileURLWithPath: project).appendingPathComponent("data/my_voice/transcripts.csv")
+                let sourceLines = (try String(contentsOf: sourceTranscript, encoding: .utf8).split(separator: "\n").map(String.init))
+                var output = "filename,text\n"
+                var missing: [String] = []
+                for source in sources {
+                    let prefix = "\"\(source.lastPathComponent)\"," 
+                    guard let line = sourceLines.first(where: { $0.hasPrefix(prefix) }) else { missing.append(source.lastPathComponent); continue }
                     output += line + "\n"
                 }
+                guard missing.isEmpty else { throw NSError(domain: "PersonalVoiceStudio", code: 3, userInfo: [NSLocalizedDescriptionKey: "transcript가 없는 파일: \(missing.joined(separator: ", "))"]) }
+                try FileManager.default.createDirectory(at: raw, withIntermediateDirectories: true)
+                for (index, source) in sources.enumerated() {
+                    let destination = raw.appendingPathComponent(source.lastPathComponent)
+                    if FileManager.default.fileExists(atPath: destination.path) { try FileManager.default.removeItem(at: destination) }
+                    try FileManager.default.copyItem(at: source, to: destination)
+                    DispatchQueue.main.async {
+                        datasetProgress = Double(index + 1) / Double(sources.count)
+                        datasetProgressText = "파일 복사 중 \(index + 1)/\(sources.count)"
+                    }
+                }
+                try output.write(to: transcript, atomically: true, encoding: .utf8)
+                DispatchQueue.main.async {
+                    isCreatingDataset = false
+                    recordingValidation = "모델 \(displayName) 데이터 생성 완료: \(sources.count)개 · \(root.path)"
+                    refreshModels()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    isCreatingDataset = false
+                    errorMessage = "선택 파일 학습 데이터 생성에 실패했습니다. \(error.localizedDescription)"
+                }
             }
-            try output.write(to: transcript, atomically: true, encoding: .utf8)
-            recordingValidation = "모델 \(modelName.trimmingCharacters(in: .whitespacesAndNewlines)) 데이터 생성 완료: \(selectedRecordings.count)개 · \(root.path)"
-            refreshModels()
-        } catch {
-            errorMessage = "선택 파일 학습 데이터 생성에 실패했습니다. \(error.localizedDescription)"
         }
     }
 
