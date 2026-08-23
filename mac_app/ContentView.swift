@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var sentenceIndex = 0
     @State private var recordingValidation: String?
     @State private var recordings: [URL] = []
+    @State private var recordingTranscripts: [String: String] = [:]
     @State private var selectedRecordings: Set<URL> = []
     @State private var modelName = "my_voice"
     @State private var models: [URL] = []
@@ -186,6 +187,8 @@ struct ContentView: View {
                                         })).labelsHidden()
                                         VStack(alignment: .leading) {
                                             Text(recording.lastPathComponent)
+                                            Text(recordingTranscripts[recording.lastPathComponent] ?? "transcript 미등록")
+                                                .lineLimit(2)
                                             Text(recordingDuration(recording)).font(.caption).foregroundStyle(.secondary)
                                         }
                                         Spacer()
@@ -536,6 +539,19 @@ struct ContentView: View {
 
     private func refreshRecordings() {
         let root = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice/raw", isDirectory: true)
+        let transcriptURL = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice/transcripts.csv")
+        var transcripts: [String: String] = [:]
+        if let data = try? String(contentsOf: transcriptURL, encoding: .utf8) {
+            for line in data.split(separator: "\n").dropFirst() {
+                let parts = line.split(separator: ",", maxSplits: 1, omittingEmptySubsequences: false)
+                if parts.count == 2 {
+                    let filename = parts[0].trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                    let text = parts[1].trimmingCharacters(in: CharacterSet(charactersIn: "\"")).replacingOccurrences(of: "\"\"", with: "\"")
+                    transcripts[filename] = text
+                }
+            }
+        }
+        recordingTranscripts = transcripts
         recordings = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil))?
             .filter { $0.pathExtension.lowercased() == "wav" }
             .sorted { $0.lastPathComponent < $1.lastPathComponent } ?? []
