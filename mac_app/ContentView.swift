@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var ttsOutput: URL?
     @State private var isSynthesizing = false
     @State private var selectedVoicePath: String?
+    @State private var ttsDevice = "cpu"
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
     let projectDirectory: String
@@ -48,6 +49,11 @@ struct ContentView: View {
                         if let values = run.last_metrics, let lr = values["learning_rate"] { Text("learning rate: \(lr)").font(.caption2) }
                     }
                 }
+                Picker("TTS 실행 장치", selection: $ttsDevice) {
+                    Text("CPU").tag("cpu")
+                    Text("MPS").tag("mps").disabled(!snapshot.mps.tensor_probe)
+                }
+                .pickerStyle(.segmented)
             } else if let errorMessage {
                 Text(errorMessage).foregroundStyle(.red)
             } else {
@@ -79,7 +85,7 @@ struct ContentView: View {
                 guard !ttsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { errorMessage = "TTS 텍스트를 입력해 주세요."; return }
                 guard let voicePath = selectedVoicePath ?? snapshot?.voices.first(where: { $0.valid })?.path else { errorMessage = "사용 가능한 Voice Package가 없습니다."; return }
                 let output = URL(fileURLWithPath: projectDirectory).appendingPathComponent("artifacts/swiftui_tts.wav")
-                let device = ProcessInfo.processInfo.environment["PVS_TTS_DEVICE"] ?? "cpu"
+                let device = ttsDevice
                 isSynthesizing = true
                 let modelDirectory = ProcessInfo.processInfo.environment["PVS_MODEL_DIR"] ?? "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
                 DispatchQueue.global(qos: .userInitiated).async {
@@ -108,6 +114,9 @@ struct ContentView: View {
                 let value = try BridgeClient.fetch(job: jobPath, voices: voicesPath, workingDirectory: projectDirectory)
                 DispatchQueue.main.async {
                     snapshot = value
+                    if let configured = ProcessInfo.processInfo.environment["PVS_TTS_DEVICE"], configured == "mps", value.mps.tensor_probe {
+                        ttsDevice = configured
+                    }
                     if selectedVoicePath == nil { selectedVoicePath = value.voices.first(where: { $0.valid })?.path }
                     errorMessage = nil
                 }

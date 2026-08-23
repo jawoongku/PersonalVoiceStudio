@@ -79,6 +79,7 @@
 - [x] MPS 학습 adapter의 Voice Package·synth·compare 연결 및 실제 WAV 검증
 - [x] Voice Package adapter의 직접 MPS synth 및 화자 유사도 검증
 - [x] SwiftUI Voice Package TTS의 MPS device 선택 연결(`PVS_TTS_DEVICE`)
+- [x] SwiftUI 화면 내 CPU/MPS TTS 장치 선택 및 MPS probe 기반 비활성화
 - [x] 학습 run 보관 계획 CLI·JSON 조회 연결(비파괴)
 - [x] run·Voice Package SHA-256 artifact manifest 생성·검증
 - [x] MPS 전체 학습 명령의 job 상태·metrics 연동
