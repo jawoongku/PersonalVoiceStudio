@@ -45,6 +45,14 @@ def build_parser() -> argparse.ArgumentParser:
     job_update.add_argument("--status", required=True, choices=("queued", "running", "completed", "failed", "cancelled"))
     job_update.add_argument("--step", type=int, default=None)
     job_update.add_argument("--error", default=None)
+    train_job = subparsers.add_parser("parquet-train-job", help="run real CPU parquet smoke training with job state")
+    train_job.add_argument("--train-data-list", required=True)
+    train_job.add_argument("--dev-data-list", required=True)
+    train_job.add_argument("--model-dir", required=True)
+    train_job.add_argument("--output", required=True)
+    train_job.add_argument("--job", required=True)
+    train_job.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    train_job.add_argument("--steps", type=int, default=2)
     doctor = subparsers.add_parser("doctor", help="inspect the local Mac/CosyVoice environment")
     doctor.add_argument("--model-dir", default=None, help="CosyVoice3 model directory")
     doctor.add_argument("--upstream-root", default=None, help="CosyVoice checkout directory")
@@ -193,6 +201,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[ERROR] {exc}")
             return 1
         print(f"[OK] status: {job['status']}")
+        return 0
+    if args.command == "parquet-train-job":
+        try:
+            update_job(args.job, "running")
+            result = run_parquet_train_smoke(args.train_data_list, args.dev_data_list, args.model_dir, args.upstream_root, args.output, steps=args.steps)
+            update_job(args.job, "completed", step=result.get("step"), metrics=result)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
+            try:
+                update_job(args.job, "failed", error=str(exc))
+            except (OSError, ValueError):
+                pass
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] training job completed: step={result.get('step')} output={args.output}")
         return 0
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)

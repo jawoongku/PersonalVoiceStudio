@@ -18,6 +18,7 @@
 - [x] UI 학습 작업 상태 조회(`job.json`)
 - [x] 학습 작업 메타데이터 생성 CLI (`job-create`)
 - [x] 학습 작업 상태 갱신 CLI (`job-update`)
+- [x] 실제 parquet CPU smoke 학습과 job 상태 연동 (`parquet-train-job`)
 - [x] UI 학습 metrics 요약 조회
 - [x] 선택적 ASR 문장 입력과 transcript 유사도 비교 기반
 - [x] Whisper 기반 선택적 ASR 자동 인식 UI (모델 다운로드·실행 가능 여부는 환경 의존)

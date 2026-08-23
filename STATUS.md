@@ -77,6 +77,7 @@
 - [x] Added UI cancellation marker for jobs via `job.json`; actual process interruption remains a future runner integration; 51 tests pass.
 - [x] Added `cancel_path` cooperative cancellation to the reusable training loop; 52 tests pass.
 - [x] Added job state transition validation to prevent terminal jobs from restarting; 53 tests pass.
+- [x] Added `parquet-train-job`, connecting real CPU parquet smoke training to queued/running/completed/failed job states.
 
 ## In progress
 

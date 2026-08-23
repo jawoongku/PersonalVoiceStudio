@@ -60,6 +60,17 @@ python -m mac_voice job-create --output artifacts/runs/my_voice --config configs
 python -m mac_voice job-update --job artifacts/runs/my_voice/job.json --status running --step 2
 ```
 
+실제 prepared parquet 기반 CPU smoke 학습을 작업 상태와 함께 실행하려면:
+
+```bash
+python -m mac_voice parquet-train-job \
+  --train-data-list data/my_voice_prepared/train/parquet/data.list \
+  --dev-data-list data/my_voice_prepared/dev/parquet/data.list \
+  --model-dir "$COSYVOICE_MODEL_DIR" \
+  --output artifacts/parquet_job_adapter.pt \
+  --job artifacts/runs/parquet_job/job.json
+```
+
 저장된 Voice Package를 점검합니다.
 
 ```bash
