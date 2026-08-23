@@ -15,6 +15,7 @@
 - [x] UI 데이터셋 전체 검증 및 오류 보고
 - [x] UI 학습 데이터 준비(`prepare`) 실행 및 결과 보고
 - [x] UI 학습 사전 점검(설정·모델·parquet) 및 오류 보고
+- [x] UI 학습 작업 상태 조회(`job.json`)
 - [x] WAV 품질 gate (길이·음량·clipping·무음; ASR 일치도는 후속)
 - [x] Gradio recording 화면 골격 및 runtime 생성 검증 (Gradio 3.43.2)
 

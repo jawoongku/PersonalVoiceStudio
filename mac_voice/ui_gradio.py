@@ -14,6 +14,7 @@ from .synth import run_synth
 from .history import append_tts_history, read_tts_history
 from .config import load_config, validate_training_config
 from .parquet import validate_data_list
+from .jobs import read_job
 
 RECOMMENDED_SENTENCES = [
     "오늘 아침에는 평소보다 조금 일찍 일어났습니다.",
@@ -136,6 +137,18 @@ def training_preflight_for_ui(config_path: str) -> str:
     return "\n".join(lines)
 
 
+def job_status_for_ui(job_path: str) -> str:
+    try:
+        job = read_job(job_path)
+    except (OSError, ValueError) as exc:
+        return f"작업 상태를 읽을 수 없습니다: {exc}"
+    lines = [f"상태: {job['status']}"]
+    for key in ("command", "config", "step", "error", "updated_at"):
+        if key in job:
+            lines.append(f"{key}: {job[key]}")
+    return "\n".join(lines)
+
+
 def build_demo():
     try:
         import gradio as gr
@@ -173,6 +186,11 @@ def build_demo():
         preflight = gr.Button("학습 준비 상태 점검")
         preflight_report = gr.Textbox(label="학습 사전 점검 결과", lines=8)
         preflight.click(training_preflight_for_ui, inputs=training_config, outputs=preflight_report)
+        gr.Markdown("## 학습 작업 상태")
+        job_path = gr.Textbox(label="job.json 경로", value="artifacts/runs/my_voice/job.json")
+        job_refresh = gr.Button("작업 상태 새로고침")
+        job_report = gr.Textbox(label="작업 상태", lines=6)
+        job_refresh.click(job_status_for_ui, inputs=job_path, outputs=job_report)
         gr.Markdown("## Voice Package TTS")
         voice_root = gr.Textbox(label="Voice Package 폴더", value="artifacts/voices")
         voice_choices = [item["path"] for item in list_voice_packages("artifacts/voices")]

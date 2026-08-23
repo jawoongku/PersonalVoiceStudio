@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, inspect_recording, prepare_dataset_for_ui, register_recording, synthesize_for_ui, training_preflight_for_ui, validate_dataset_for_ui
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, inspect_recording, job_status_for_ui, prepare_dataset_for_ui, register_recording, synthesize_for_ui, training_preflight_for_ui, validate_dataset_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -55,3 +55,6 @@ class GradioPrototypeTests(unittest.TestCase):
     def test_training_preflight_reports_missing_config(self):
         report = training_preflight_for_ui("/tmp/does-not-exist-training.yaml")
         self.assertIn("설정 읽기 실패", report)
+
+    def test_job_status_reports_missing_job(self):
+        self.assertIn("작업 상태를 읽을 수 없습니다", job_status_for_ui("/tmp/missing-job.json"))
