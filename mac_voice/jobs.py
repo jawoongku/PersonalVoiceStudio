@@ -28,6 +28,16 @@ def update_job(path: str | Path, status: str, **fields: Any) -> dict[str, Any]:
     if status not in {"queued", "running", "completed", "failed", "cancelled"}:
         raise ValueError(f"invalid job status: {status}")
     payload = read_job(job_path)
+    current = payload["status"]
+    allowed = {
+        "queued": {"queued", "running", "cancelled", "failed"},
+        "running": {"running", "completed", "failed", "cancelled"},
+        "completed": {"completed"},
+        "failed": {"failed"},
+        "cancelled": {"cancelled"},
+    }
+    if status not in allowed[current]:
+        raise ValueError(f"invalid job transition: {current} -> {status}")
     payload.update(fields)
     payload["status"] = status
     payload["updated_at"] = _now()

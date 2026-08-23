@@ -20,3 +20,11 @@ class JobTests(unittest.TestCase):
             path = create_job(Path(temp) / "run", command="train", config="training.yaml")
             with self.assertRaises(ValueError):
                 update_job(path, "unknown")
+
+    def test_terminal_job_cannot_restart(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = create_job(Path(temp) / "run", command="train", config="training.yaml")
+            update_job(path, "running")
+            update_job(path, "completed")
+            with self.assertRaises(ValueError):
+                update_job(path, "running")
