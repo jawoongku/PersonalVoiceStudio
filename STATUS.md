@@ -116,6 +116,7 @@
 - [x] SwiftUI bridge accepts `PVS_PYTHON` to select the Python/Conda runtime.
 - [x] SwiftUI app accepts `PVS_JOB_PATH` and `PVS_VOICES_PATH` for project-specific state.
 - [x] Final local verification after SwiftPM ignore update: 59 Python tests and Swift release build pass; worktree clean.
+- [x] Added pure-Python cosine similarity primitive for future validated speaker embeddings; actual embedding extraction/scoring remains pending.
 
 ## In progress
 

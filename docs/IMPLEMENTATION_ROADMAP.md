@@ -67,6 +67,7 @@
 
 - [x] dataset transcript 기반 적응형 문장 추천
 - [x] ASR transcript 비교 기반 및 선택적 Whisper 연결
-- [ ] 화자 유사도 평가
+- [ ] 실제 화자 유사도 평가(임베딩 모델·검증 기준)
+- [x] 화자 임베딩 cosine similarity 계산 계약 (임베딩 추출기 연결은 후속)
 - [ ] MPS 호환 runtime
 - [ ] 장시간 학습 및 모델 관리
