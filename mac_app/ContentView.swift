@@ -167,124 +167,86 @@ struct ContentView: View {
 
     private var recordingWorkspace: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("학습용 문장을 녹음합니다").font(.title2)
-                    Text("문장을 읽고 녹음한 뒤 검증 결과를 확인하여 학습 데이터에 저장하세요.")
-                        .foregroundStyle(.secondary)
-                }
-
-                GroupBox("녹음할 문장") {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text(trainingSentence).font(.title3).textSelection(.enabled)
-                        HStack {
-                            Button("다음 문장", action: nextTrainingSentence)
-                            Spacer()
-                            Button(recorder.isRecording ? "녹음 중지" : "이 문장 녹음", action: toggleRecording)
-                                .keyboardShortcut(.space, modifiers: [])
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-
-                GroupBox("입력 레벨") {
-                    WaveformView(samples: recorder.waveform, active: recorder.isRecording)
-                        .frame(height: 72)
-                        .accessibilityLabel(recorder.isRecording ? "녹음 입력 레벨" : "최근 녹음 입력 레벨")
-                }
-
-                if let validation = recordingValidation {
-                    LabeledContent("검증 결과") {
-                        Text(validation)
-                            .foregroundStyle(validation.hasPrefix("사용 가능") || validation.hasPrefix("저장 완료") ? .primary : .secondary)
-                            .multilineTextAlignment(.trailing)
-                    }
-                }
-
-                if let output = recorder.lastOutput, !recorder.isRecording {
-                    GroupBox("녹음 파일") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(output.lastPathComponent).font(.body).textSelection(.enabled)
-                            HStack {
-                                Button("검증", action: validateRecording)
-                                Button("학습 데이터로 저장") { saveTrainingRecording(output) }
-                                    .disabled(!(recordingValidation?.hasPrefix("사용 가능") ?? false))
-                                Spacer()
-                                Button(audioPlayer.isPlaying ? "재생 중지" : "녹음 재생") { togglePlayback(output) }
-                                Button("Finder에서 보기") { NSWorkspace.shared.activateFileViewerSelecting([output]) }
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
-
-                GroupBox("저장된 녹음 파일") {
-                    if recordings.isEmpty {
-                        Text("아직 저장된 녹음 파일이 없습니다.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        LazyVStack(alignment: .leading, spacing: 8) {
-                            ForEach(recordings, id: \.self) { recording in
-                                HStack {
-                                    Toggle("", isOn: Binding(
-                                        get: { selectedRecordings.contains(recording) },
-                                        set: { checked in
-                                            if checked { selectedRecordings.insert(recording) }
-                                            else { selectedRecordings.remove(recording) }
+            HStack(alignment: .top, spacing: 20) {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("녹음 파일").font(.title2)
+                    GroupBox("저장된 녹음") {
+                        if recordings.isEmpty {
+                            Text("아직 저장된 녹음 파일이 없습니다.").foregroundStyle(.secondary)
+                        } else {
+                            LazyVStack(alignment: .leading, spacing: 8) {
+                                ForEach(recordings, id: \.self) { recording in
+                                    HStack {
+                                        Toggle("", isOn: Binding(get: { selectedRecordings.contains(recording) }, set: { checked in
+                                            if checked { selectedRecordings.insert(recording) } else { selectedRecordings.remove(recording) }
+                                        })).labelsHidden()
+                                        VStack(alignment: .leading) {
+                                            Text(recording.lastPathComponent)
+                                            Text(recordingDuration(recording)).font(.caption).foregroundStyle(.secondary)
                                         }
-                                    ))
-                                    .labelsHidden()
-                                    Image(systemName: "waveform")
-                                        .foregroundStyle(Color.accentColor)
-                                    VStack(alignment: .leading) {
-                                        Text(recording.lastPathComponent)
-                                        Text(recordingDuration(recording))
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                        Spacer()
+                                        Button("재생") { togglePlayback(recording) }
+                                        Button("삭제", role: .destructive) { deleteRecording(recording) }
                                     }
-                                    Spacer()
-                                    Button("재생") { togglePlayback(recording) }
-                                    Button("Finder") { NSWorkspace.shared.activateFileViewerSelecting([recording]) }
-                                    Button("삭제", role: .destructive) { deleteRecording(recording) }
+                                    if recording != recordings.last { Divider() }
                                 }
-                                if recording != recordings.last { Divider() }
                             }
                         }
+                        Text("선택 \(selectedRecordings.count)개").font(.caption).foregroundStyle(.secondary)
+                        TextField("모델 이름", text: $modelName).textFieldStyle(.roundedBorder)
+                        Button("선택 파일로 모델 데이터 만들기", action: createSelectedDataset)
+                            .disabled(selectedRecordings.isEmpty || sanitizedModelName.isEmpty)
                     }
-                    HStack {
-                        Text("선택 \(selectedRecordings.count)개")
-                            .font(.caption).foregroundStyle(.secondary)
-                        Spacer()
-                    }
-                    TextField("모델 이름", text: $modelName)
-                        .textFieldStyle(.roundedBorder)
-                    Button("선택 파일로 모델 데이터 만들기", action: createSelectedDataset)
-                        .disabled(selectedRecordings.isEmpty || sanitizedModelName.isEmpty)
-                }
-
-                GroupBox("생성된 모델") {
-                    if models.isEmpty {
-                        Text("아직 생성된 모델이 없습니다.").foregroundStyle(.secondary)
-                    } else {
-                        LazyVStack(alignment: .leading, spacing: 8) {
+                    GroupBox("생성된 모델") {
+                        if models.isEmpty { Text("아직 생성된 모델이 없습니다.").foregroundStyle(.secondary) }
+                        else {
                             ForEach(models, id: \.self) { model in
                                 HStack {
                                     Image(systemName: "cube").foregroundStyle(Color.accentColor)
                                     Text(model.lastPathComponent)
                                     Spacer()
-                                    Button("이름 변경") {
-                                        renameModel = model
-                                        renameValue = model.lastPathComponent
-                                    }
+                                    Button("이름 변경") { renameModel = model; renameValue = model.lastPathComponent }
                                     Button("삭제", role: .destructive) { deleteModel(model) }
                                 }
-                                if model != models.last { Divider() }
                             }
                         }
                     }
                 }
+                .frame(minWidth: 360, maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("녹음").font(.title2)
+                    Text("문장을 읽고 녹음한 뒤 검증 결과를 확인하세요.").foregroundStyle(.secondary)
+                    GroupBox("녹음할 문장") {
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text(trainingSentence).font(.title3).textSelection(.enabled)
+                            HStack {
+                                Button("다음 문장", action: nextTrainingSentence)
+                                Spacer()
+                                Button(recorder.isRecording ? "녹음 중지" : "이 문장 녹음", action: toggleRecording)
+                            }
+                        }
+                    }
+                    GroupBox("입력 레벨") {
+                        WaveformView(samples: recorder.waveform, active: recorder.isRecording).frame(height: 100)
+                    }
+                    if let validation = recordingValidation { Text(validation).foregroundStyle(.secondary) }
+                    if let output = recorder.lastOutput, !recorder.isRecording {
+                        GroupBox("최근 녹음") {
+                            HStack {
+                                Text(output.lastPathComponent)
+                                Spacer()
+                                Button("검증", action: validateRecording)
+                                Button("학습 데이터로 저장") { saveTrainingRecording(output) }
+                                    .disabled(!(recordingValidation?.hasPrefix("사용 가능") ?? false))
+                                Button("재생") { togglePlayback(output) }
+                            }
+                        }
+                    }
+                }
+                .frame(minWidth: 360, maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: 760, alignment: .leading)
+            .frame(maxWidth: 1100, alignment: .leading)
             .padding()
         }
     }
