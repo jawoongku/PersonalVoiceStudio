@@ -20,6 +20,9 @@ struct ContentView: View {
     @State private var recordings: [URL] = []
     @State private var selectedRecordings: Set<URL> = []
     @State private var modelName = "my_voice"
+    @State private var models: [URL] = []
+    @State private var renameModel: URL?
+    @State private var renameValue = ""
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
 
@@ -47,13 +50,20 @@ struct ContentView: View {
             .navigationTitle((selectedSection ?? .dashboard).title)
             .toolbar { toolbarContent }
         }
-        .task { refresh(); refreshRecordings() }
+        .task { refresh(); refreshRecordings(); refreshModels() }
         .onReceive(refreshTimer) { _ in refresh() }
         .onReceive(NotificationCenter.default.publisher(for: .personalVoiceRefresh)) { _ in refresh() }
         .alert("작업을 완료할 수 없습니다", isPresented: hasError) {
             Button("확인", role: .cancel) { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "알 수 없는 오류가 발생했습니다.")
+        }
+        .alert("모델 이름 변경", isPresented: Binding(get: { renameModel != nil }, set: { if !$0 { renameModel = nil } })) {
+            TextField("모델 이름", text: $renameValue)
+            Button("취소", role: .cancel) { renameModel = nil }
+            Button("변경") { commitRenameModel() }
+        } message: {
+            Text("새 모델 이름을 입력하세요.")
         }
     }
 
@@ -250,6 +260,28 @@ struct ContentView: View {
                         .textFieldStyle(.roundedBorder)
                     Button("선택 파일로 모델 데이터 만들기", action: createSelectedDataset)
                         .disabled(selectedRecordings.isEmpty || sanitizedModelName.isEmpty)
+                }
+
+                GroupBox("생성된 모델") {
+                    if models.isEmpty {
+                        Text("아직 생성된 모델이 없습니다.").foregroundStyle(.secondary)
+                    } else {
+                        LazyVStack(alignment: .leading, spacing: 8) {
+                            ForEach(models, id: \.self) { model in
+                                HStack {
+                                    Image(systemName: "cube").foregroundStyle(Color.accentColor)
+                                    Text(model.lastPathComponent)
+                                    Spacer()
+                                    Button("이름 변경") {
+                                        renameModel = model
+                                        renameValue = model.lastPathComponent
+                                    }
+                                    Button("삭제", role: .destructive) { deleteModel(model) }
+                                }
+                                if model != models.last { Divider() }
+                            }
+                        }
+                    }
                 }
             }
             .frame(maxWidth: 760, alignment: .leading)
@@ -536,6 +568,42 @@ struct ContentView: View {
         selectedRecordings = selectedRecordings.intersection(Set(recordings))
     }
 
+    private func refreshModels() {
+        let root = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/models", isDirectory: true)
+        models = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: [.isDirectoryKey]))?
+            .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
+            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending } ?? []
+    }
+
+    private func deleteModel(_ model: URL) {
+        do {
+            try FileManager.default.removeItem(at: model)
+            refreshModels()
+            recordingValidation = "모델 삭제 완료: \(model.lastPathComponent)"
+        } catch {
+            errorMessage = "모델을 삭제하지 못했습니다. \(error.localizedDescription)"
+        }
+    }
+
+    private func commitRenameModel() {
+        guard let source = renameModel else { return }
+        let value = renameValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let safe = value.map { $0.isLetter || $0.isNumber || $0 == "_" || $0 == "-" ? $0 : "_" }
+        let name = String(safe).trimmingCharacters(in: CharacterSet(charactersIn: "._-"))
+        guard !name.isEmpty else { errorMessage = "모델 이름을 입력하세요."; return }
+        let destination = source.deletingLastPathComponent().appendingPathComponent(name, isDirectory: true)
+        do {
+            if FileManager.default.fileExists(atPath: destination.path) { throw NSError(domain: "PersonalVoiceStudio", code: 2, userInfo: [NSLocalizedDescriptionKey: "같은 이름의 모델이 이미 있습니다."]) }
+            try FileManager.default.moveItem(at: source, to: destination)
+            renameModel = nil
+            modelName = name
+            refreshModels()
+            recordingValidation = "모델 이름 변경 완료: \(name)"
+        } catch {
+            errorMessage = "모델 이름을 변경하지 못했습니다. \(error.localizedDescription)"
+        }
+    }
+
     private func deleteRecording(_ recording: URL) {
         do {
             try FileManager.default.removeItem(at: recording)
@@ -567,6 +635,7 @@ struct ContentView: View {
             }
             try output.write(to: transcript, atomically: true, encoding: .utf8)
             recordingValidation = "모델 \(modelName.trimmingCharacters(in: .whitespacesAndNewlines)) 데이터 생성 완료: \(selectedRecordings.count)개 · \(root.path)"
+            refreshModels()
         } catch {
             errorMessage = "선택 파일 학습 데이터 생성에 실패했습니다. \(error.localizedDescription)"
         }
