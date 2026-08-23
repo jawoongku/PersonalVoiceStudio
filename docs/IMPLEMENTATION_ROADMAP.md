@@ -89,6 +89,7 @@
 - [x] SwiftUI job 화면에 step·train/dev loss·오류 표시
 - [x] MPS 학습 job metrics에 할당 메모리 기록 및 SwiftUI 표시
 - [x] MPS metrics JSONL에 current/driver memory 기록
+- [x] SwiftUI job 화면에 MPS driver memory 표시
 - [x] macOS 배포 서명·notarization 자격 사전 점검 스크립트
 - [ ] 장시간 학습 및 모델 관리
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)

@@ -27,6 +27,7 @@ struct ContentView: View {
                     if let train = metrics["train_loss"] { Text("train loss: \(train)").font(.caption) }
                     if let dev = metrics["val_loss"] { Text("dev loss: \(dev)").font(.caption) }
                     if let memory = metrics["mps_memory"] { Text(String(format: "MPS memory: %.1f MB", memory / 1_048_576.0)).font(.caption) }
+                    if let driver = metrics["driver_memory"] { Text(String(format: "MPS driver: %.1f MB", driver / 1_048_576.0)).font(.caption) }
                 }
                 if let jobError = snapshot.job.error, !jobError.isEmpty {
                     Text(jobError).font(.caption).foregroundStyle(.red)

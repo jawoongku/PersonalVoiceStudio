@@ -153,7 +153,7 @@ def run_user_parquet_mps_train(
         driver = int(torch.mps.driver_allocated_memory()) if hasattr(torch, "mps") and hasattr(torch.mps, "driver_allocated_memory") else 0
         metrics.log(step=step, train_loss=last_loss, learning_rate=1e-4, mps_memory=allocated, driver_memory=driver)
         if progress is not None:
-            progress(step, {"step": step, "train_loss": last_loss, "learning_rate": 1e-4, "mps_memory": allocated})
+            progress(step, {"step": step, "train_loss": last_loss, "learning_rate": 1e-4, "mps_memory": allocated, "driver_memory": driver})
     llm.eval()
     dev_losses = []
     with torch.no_grad():
@@ -168,7 +168,7 @@ def run_user_parquet_mps_train(
     driver = int(torch.mps.driver_allocated_memory()) if hasattr(torch, "mps") and hasattr(torch.mps, "driver_allocated_memory") else 0
     metrics.log(step=len(train_rows), val_loss=dev_loss_value, learning_rate=1e-4, mps_memory=allocated, driver_memory=driver)
     if progress is not None:
-        progress(len(train_rows), {"step": len(train_rows), "val_loss": dev_loss_value, "learning_rate": 1e-4, "mps_memory": allocated})
+        progress(len(train_rows), {"step": len(train_rows), "val_loss": dev_loss_value, "learning_rate": 1e-4, "mps_memory": allocated, "driver_memory": driver})
     checkpoint = save_adapter_checkpoint(llm, output_path, step=len(train_rows), epoch=0, val_loss=dev_loss_value, config={"device": "mps", "rank": rank, "alpha": alpha, "train_rows": len(train_rows)})
     state_path = save_training_state(output_path.with_suffix(".state.pt"), optimizer=optimizer, scheduler=None, step=len(train_rows), epoch=0, config={"device": "mps", "rank": rank, "alpha": alpha})
     return {"status": "ok", "device": str(device), "train_rows": len(train_rows), "dev_rows": len(dev_rows), "steps": len(train_rows), "train_loss": last_loss, "dev_loss": dev_loss_value, "checkpoint": str(checkpoint), "state": str(state_path), "metrics": str(output_path.with_suffix(".metrics.jsonl")), "matched_modules": len(matched), "trainable": stats.trainable}
