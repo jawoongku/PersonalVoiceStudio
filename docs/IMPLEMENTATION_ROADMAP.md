@@ -21,6 +21,7 @@
 - [x] UI 학습 metrics 요약 조회
 - [x] 선택적 ASR 문장 입력과 transcript 유사도 비교 기반
 - [x] Whisper 기반 선택적 ASR 자동 인식 UI (모델 다운로드·실행 가능 여부는 환경 의존)
+- [x] Gradio 3 호환 마이크·파일 업로드 입력
 - [x] WAV 품질 gate (길이·음량·clipping·무음; ASR 일치도는 후속)
 - [x] Gradio recording 화면 골격 및 runtime 생성 검증 (Gradio 3.43.2)
 

@@ -175,6 +175,14 @@ def job_status_for_ui(job_path: str) -> str:
     return "\n".join(lines)
 
 
+def inspect_recording_inputs(microphone: str | Path | None, uploaded: str | Path | None, transcript: str, recognized: str = "") -> str:
+    return inspect_recording(microphone or uploaded, transcript, recognized)
+
+
+def register_recording_inputs(dataset_root: str, microphone: str | Path | None, uploaded: str | Path | None, transcript: str) -> str:
+    return register_recording(dataset_root, microphone or uploaded, transcript)
+
+
 def build_demo():
     try:
         import gradio as gr
@@ -186,11 +194,13 @@ def build_demo():
         # Gradio 3.x (required by matcha-tts) uses ``source`` while newer
         # releases use ``sources``. Keep the prototype compatible with both.
         audio_kwargs = {"type": "filepath", "label": "음성 녹음"}
-        if "sources" in pyinspect.signature(gr.Audio).parameters:
+        multi_source_audio = "sources" in pyinspect.signature(gr.Audio).parameters
+        if multi_source_audio:
             audio = gr.Audio(sources=["microphone", "upload"], **audio_kwargs)
         else:
             audio = gr.Audio(source="microphone", **audio_kwargs)
-            gr.Markdown("Gradio 3.x에서는 마이크 입력을 사용하세요. 업로드 파일은 다음 단계에서 통합합니다.")
+            uploaded_audio = gr.Audio(source="upload", **audio_kwargs)
+            gr.Markdown("마이크 또는 업로드 중 하나를 선택해 사용하세요.")
         transcript = gr.Textbox(label="Transcript", value=RECOMMENDED_SENTENCES[0])
         recognized = gr.Textbox(label="ASR 인식 문장 (선택)")
         asr_model = gr.Dropdown(["tiny", "base"], value="tiny", label="ASR 모델")
@@ -201,9 +211,15 @@ def build_demo():
         save = gr.Button("검사 통과 파일을 데이터셋에 저장")
         save_report = gr.Textbox(label="저장 결과", lines=6)
         sentence.change(lambda value: value, inputs=sentence, outputs=transcript)
-        inspect.click(inspect_recording, inputs=[audio, transcript, recognized], outputs=report)
+        if multi_source_audio:
+            inspect.click(inspect_recording, inputs=[audio, transcript, recognized], outputs=report)
+        else:
+            inspect.click(inspect_recording_inputs, inputs=[audio, uploaded_audio, transcript, recognized], outputs=report)
         asr.click(transcribe_with_whisper, inputs=[audio, asr_model], outputs=recognized)
-        save.click(register_recording, inputs=[dataset_root, audio, transcript], outputs=save_report)
+        if multi_source_audio:
+            save.click(register_recording, inputs=[dataset_root, audio, transcript], outputs=save_report)
+        else:
+            save.click(register_recording_inputs, inputs=[dataset_root, audio, uploaded_audio, transcript], outputs=save_report)
         dataset_check = gr.Button("데이터셋 전체 검증")
         dataset_report = gr.Textbox(label="데이터셋 검증 결과", lines=8)
         dataset_check.click(validate_dataset_for_ui, inputs=dataset_root, outputs=dataset_report)

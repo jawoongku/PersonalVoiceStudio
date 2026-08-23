@@ -70,6 +70,7 @@
 - [x] Added optional recognized-text comparison with normalized transcript similarity; 45 tests pass. Full ASR inference remains a later integration.
 - [x] Added optional Whisper `tiny`/`base` ASR button with lazy model loading and error reporting; 46 tests pass.
 - [x] Added isolated optional ASR dependency manifest (`requirements-asr.txt`) so the base environment remains unchanged.
+- [x] Added Gradio 3-compatible separate microphone/upload inputs with unified inspection and registration; 47 tests pass.
 
 ## In progress
 
