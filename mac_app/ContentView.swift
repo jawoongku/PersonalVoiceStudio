@@ -23,7 +23,10 @@ struct ContentView: View {
                 }
                 Text("학습 runs: \(snapshot.runs.count)")
                 List(snapshot.runs) { run in
-                    HStack { Text(run.name); Spacer(); Text(run.job_status ?? "unknown") }
+                    VStack(alignment: .leading) {
+                        HStack { Text(run.name); Spacer(); Text(run.job_status ?? "unknown") }
+                        if let checkpoint = run.checkpoint { Text(checkpoint).font(.caption).foregroundStyle(.secondary) }
+                    }
                 }
             } else if let errorMessage {
                 Text(errorMessage).foregroundStyle(.red)
