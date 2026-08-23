@@ -177,10 +177,12 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(f"[OK] status: {job['status']}")
         for key in ("command", "config", "step", "error", "updated_at"):
-            if key in job:
+            if key in job and job[key] is not None:
                 print(f"[INFO] {key}: {job[key]}")
         metrics = job.get("metrics")
         if isinstance(metrics, dict):
+            if not job.get("step") and "steps" in metrics:
+                print(f"[INFO] step: {metrics['steps']}")
             for key in ("train_loss", "dev_loss", "checkpoint", "state"):
                 if key in metrics:
                     print(f"[INFO] {key}: {metrics[key]}")
