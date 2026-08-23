@@ -39,7 +39,15 @@ def run_comparison(voice_dir: str | Path, text: str, output_dir: str | Path, *, 
     reference_text = (voice_path / "reference.txt").read_text(encoding="utf-8").strip()
     run_zero_shot(model_dir, voice_path / "reference.wav", reference_text, text, before, upstream_root=upstream_root)
     run_synth(voice_path, text, after, model_dir=model_dir, upstream_root=upstream_root)
-    comparison = {"text": text, "before": _audio_summary(before), "after": _audio_summary(after)}
+    comparison = {
+        "text": text,
+        "before": _audio_summary(before),
+        "after": _audio_summary(after),
+        "speaker_similarity": {
+            "status": "not_available",
+            "reason": "No validated speaker-embedding scorer is configured; audio statistics are not a similarity score.",
+        },
+    }
     report = destination / "comparison.json"
     report.write_text(json.dumps(comparison, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return report
