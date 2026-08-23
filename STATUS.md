@@ -120,6 +120,7 @@
 - [x] Exposed the similarity primitive through the `similarity` CLI command.
 - [x] Similarity CLI now accepts JSON embedding files as well as inline vectors.
 - [x] Marked the product specification-to-code-structure milestone complete for the implemented MVP layers.
+- [x] Added AVAudioPlayer playback controls for the latest SwiftUI recording.
 
 ## In progress
 

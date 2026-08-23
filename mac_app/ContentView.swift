@@ -4,6 +4,7 @@ struct ContentView: View {
     @State private var snapshot: BridgeSnapshot?
     @State private var errorMessage: String?
     @StateObject private var recorder = Recorder()
+    @StateObject private var audioPlayer = AudioPlayer()
     let projectDirectory: String
     let jobPath: String
     let voicesPath: String
@@ -36,6 +37,12 @@ struct ContentView: View {
                 }
             }
             if let output = recorder.lastOutput { Text("녹음 파일: \(output.path)").font(.caption) }
+            if let output = recorder.lastOutput {
+                Button(audioPlayer.isPlaying ? "재생 중지" : "녹음 재생") {
+                    if audioPlayer.isPlaying { audioPlayer.stop() }
+                    else { do { try audioPlayer.play(url: output) } catch { errorMessage = "재생 오류: \(error.localizedDescription)" } }
+                }
+            }
         }
         .padding()
         .task { refresh() }

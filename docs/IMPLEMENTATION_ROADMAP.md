@@ -50,6 +50,7 @@
 - [x] 생성 WAV UI 재생 출력
 - [x] TTS 생성 히스토리 기록·조회 (`artifacts/tts_history.jsonl`)
 - [x] 오디오 재생·저장·히스토리
+- [x] SwiftUI 녹음 WAV 재생 컨트롤
 
 ## Phase 4 — macOS 제품화
 
