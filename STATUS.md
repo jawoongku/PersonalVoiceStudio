@@ -108,6 +108,7 @@
 - [x] Added bundle identifier/version metadata and optional `SIGNING_IDENTITY` codesign path; notarization remains pending.
 - [x] Signed builds now run `codesign --verify --deep --strict` after signing.
 - [x] Added app bundle smoke-check script and `make check-app` target.
+- [x] Integrated release `.app` build and bundle smoke-check into `scripts/verify_all.sh`.
 - [x] Added guarded `scripts/notarize_macos_app.sh`; execution requires a configured Apple notarytool profile.
 - [x] Added GitHub Actions CI for Python unit tests and macOS Swift release build.
 - [x] Added `scripts/verify_all.sh` to run both local checks from the correct project directories.
