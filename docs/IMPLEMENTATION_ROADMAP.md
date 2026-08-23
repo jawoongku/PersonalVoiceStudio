@@ -55,7 +55,7 @@
 
 - [x] SwiftUI shell source scaffold 및 SwiftPM debug build
 - [x] macOS Swift Package manifest (macOS 14+)
-- [ ] AVAudioEngine 녹음
+- [x] AVAudioEngine 녹음 source 및 WAV 저장
 - [x] Python engine subprocess/API bridge (job/bridge-status 기반)
 - [ ] microphone/filesystem 권한
 - [ ] `.app` 패키징
