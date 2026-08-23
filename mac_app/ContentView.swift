@@ -68,6 +68,7 @@ struct ContentView: View {
             }
             TextField("TTS 텍스트", text: $ttsText)
             Button(isSynthesizing ? "TTS 생성 중..." : "Voice Package TTS 생성") {
+                guard !ttsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { errorMessage = "TTS 텍스트를 입력해 주세요."; return }
                 guard let voicePath = selectedVoicePath ?? snapshot?.voices.first(where: { $0.valid })?.path else { errorMessage = "사용 가능한 Voice Package가 없습니다."; return }
                 let output = URL(fileURLWithPath: projectDirectory).appendingPathComponent("artifacts/swiftui_tts.wav")
                 isSynthesizing = true
