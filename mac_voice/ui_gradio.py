@@ -8,7 +8,7 @@ import csv
 import shutil
 from pathlib import Path
 
-from .dataset import _pcm_stats
+from .dataset import _pcm_stats, render_validation, validate_dataset
 from .catalog import list_voice_packages
 from .synth import run_synth
 from .history import append_tts_history, read_tts_history
@@ -92,6 +92,14 @@ def synthesize_for_ui(voice_root: str, voice_name: str, text: str, model_dir: st
     return f"합성 완료: {result}", str(result)
 
 
+def validate_dataset_for_ui(dataset_root: str) -> str:
+    try:
+        records, errors = validate_dataset(dataset_root)
+    except (OSError, ValueError) as exc:
+        return f"검증할 수 없습니다: {exc}"
+    return render_validation(records, errors) or "검증할 파일이 없습니다."
+
+
 def build_demo():
     try:
         import gradio as gr
@@ -117,6 +125,9 @@ def build_demo():
         sentence.change(lambda value: value, inputs=sentence, outputs=transcript)
         inspect.click(inspect_recording, inputs=[audio, transcript], outputs=report)
         save.click(register_recording, inputs=[dataset_root, audio, transcript], outputs=save_report)
+        dataset_check = gr.Button("데이터셋 전체 검증")
+        dataset_report = gr.Textbox(label="데이터셋 검증 결과", lines=8)
+        dataset_check.click(validate_dataset_for_ui, inputs=dataset_root, outputs=dataset_report)
         gr.Markdown("## Voice Package TTS")
         voice_root = gr.Textbox(label="Voice Package 폴더", value="artifacts/voices")
         voice_choices = [item["path"] for item in list_voice_packages("artifacts/voices")]

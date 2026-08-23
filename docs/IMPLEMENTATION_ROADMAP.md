@@ -12,6 +12,7 @@
 - [x] 문장 추천 큐 (초기 정적 문장 세트)
 - [x] 녹음 파일 등록 및 transcript 입력 (Gradio prototype)
 - [x] 품질 검사 통과 녹음의 dataset/raw 복사 및 transcripts.csv 자동 등록
+- [x] UI 데이터셋 전체 검증 및 오류 보고
 - [x] WAV 품질 gate (길이·음량·clipping·무음; ASR 일치도는 후속)
 - [x] Gradio recording 화면 골격 및 runtime 생성 검증 (Gradio 3.43.2)
 

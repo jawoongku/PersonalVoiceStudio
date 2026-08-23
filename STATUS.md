@@ -60,6 +60,7 @@
 - [x] Added Gradio TTS panel with Voice Package selection, text input, output path, and synth-engine error reporting; UI construction and 38 tests pass.
 - [x] Connected generated WAV playback to the TTS panel; failed synthesis clears the audio output.
 - [x] Added append-only TTS history and a UI refresh control for recent generations; 39 tests pass.
+- [x] Added UI-wide dataset validation for WAV/transcript completeness; 40 tests pass.
 
 ## In progress
 
