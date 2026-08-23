@@ -122,6 +122,7 @@
 - [x] Marked the product specification-to-code-structure milestone complete for the implemented MVP layers.
 - [x] Added AVAudioPlayer playback controls for the latest SwiftUI recording.
 - [x] Connected SwiftUI text input to the Python `synth` CLI and generated-WAV playback; release build passes.
+- [x] SwiftUI TTS now runs off the main thread with a disabled-in-progress button and completion/error updates.
 
 ## In progress
 
