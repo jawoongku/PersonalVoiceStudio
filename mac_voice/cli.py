@@ -206,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             update_job(args.job, "running")
             result = run_parquet_train_smoke(args.train_data_list, args.dev_data_list, args.model_dir, args.upstream_root, args.output, steps=args.steps)
-            update_job(args.job, "completed", step=result.get("step"), metrics=result)
+            update_job(args.job, "completed", step=result.get("step", result.get("steps")), metrics=result)
         except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
             try:
                 update_job(args.job, "failed", error=str(exc))
@@ -214,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
                 pass
             print(f"[ERROR] {exc}")
             return 1
-        print(f"[OK] training job completed: step={result.get('step')} output={args.output}")
+        print(f"[OK] training job completed: step={result.get('step', result.get('steps'))} output={args.output}")
         return 0
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)
