@@ -15,6 +15,8 @@ struct JobSnapshot: Codable {
     let command: String?
     let step: Int?
     let package: String?
+    let error: String?
+    let metrics: [String: Double]?
 }
 
 struct RunEntry: Codable, Identifiable {

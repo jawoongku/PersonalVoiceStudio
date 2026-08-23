@@ -9,7 +9,11 @@ from .mps_runtime import probe as probe_mps_runtime
 
 
 def job_snapshot(path: str) -> dict:
-    return read_job(path)
+    job = read_job(path)
+    metrics = job.get("metrics")
+    if isinstance(metrics, dict):
+        job["metrics"] = {key: value for key, value in metrics.items() if isinstance(value, (int, float)) and not isinstance(value, bool)}
+    return job
 
 
 def voice_catalog(root: str) -> list[dict]:

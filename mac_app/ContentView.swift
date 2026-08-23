@@ -22,6 +22,14 @@ struct ContentView: View {
             Text("Personal Voice Studio").font(.title)
             if let snapshot {
                 Text("작업 상태: \(snapshot.job.status)")
+                if let step = snapshot.job.step { Text("현재 step: \(step)").font(.caption) }
+                if let metrics = snapshot.job.metrics {
+                    if let train = metrics["train_loss"] { Text("train loss: \(train)").font(.caption) }
+                    if let dev = metrics["val_loss"] { Text("dev loss: \(dev)").font(.caption) }
+                }
+                if let jobError = snapshot.job.error, !jobError.isEmpty {
+                    Text(jobError).font(.caption).foregroundStyle(.red)
+                }
                 if snapshot.job.status == "running" {
                     Button(isCancelling ? "취소 요청 중..." : "학습 취소") {
                         isCancelling = true
