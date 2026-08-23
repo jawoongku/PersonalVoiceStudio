@@ -120,6 +120,7 @@
 - [x] SwiftUI TTS now exposes a Voice Package picker instead of always using the first package.
 - [x] SwiftUI recording and TTS outputs can be revealed in Finder.
 - [x] SwiftUI TTS rejects empty text before spawning the Python process.
+- [x] SwiftUI bridge status refresh now runs off the main thread.
 - [x] Added guarded `scripts/notarize_macos_app.sh`; execution requires a configured Apple notarytool profile.
 - [x] Added GitHub Actions CI for Python unit tests and macOS Swift release build.
 - [x] Added `scripts/verify_all.sh` to run both local checks from the correct project directories.

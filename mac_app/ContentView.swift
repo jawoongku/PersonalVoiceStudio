@@ -94,12 +94,17 @@ struct ContentView: View {
     }
 
     private func refresh() {
-        do {
-            let value = try BridgeClient.fetch(job: jobPath, voices: voicesPath, workingDirectory: projectDirectory)
-            snapshot = value
-            if selectedVoicePath == nil { selectedVoicePath = value.voices.first(where: { $0.valid })?.path }
-            errorMessage = nil
+        DispatchQueue.global(qos: .utility).async {
+            do {
+                let value = try BridgeClient.fetch(job: jobPath, voices: voicesPath, workingDirectory: projectDirectory)
+                DispatchQueue.main.async {
+                    snapshot = value
+                    if selectedVoicePath == nil { selectedVoicePath = value.voices.first(where: { $0.valid })?.path }
+                    errorMessage = nil
+                }
+            } catch {
+                DispatchQueue.main.async { errorMessage = "Python bridge 오류: \(error.localizedDescription)" }
+            }
         }
-        catch { errorMessage = "Python bridge 오류: \(error.localizedDescription)" }
     }
 }
