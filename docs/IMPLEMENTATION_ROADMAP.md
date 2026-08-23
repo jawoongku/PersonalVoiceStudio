@@ -9,10 +9,10 @@
 ## Phase 1 — Python MVP
 
 - [ ] 프로젝트 생성 API/CLI
-- [ ] 문장 추천 큐
-- [ ] 녹음 파일 등록 및 transcript 저장
-- [ ] 품질 gate와 accepted/review/rejected 상태
-- [ ] Gradio recording 화면
+- [x] 문장 추천 큐 (초기 정적 문장 세트)
+- [x] 녹음 파일 등록 및 transcript 입력 (Gradio prototype)
+- [x] WAV 품질 gate (길이·음량·clipping·무음; ASR 일치도는 후속)
+- [x] Gradio recording 화면 골격 (Gradio dependency 설치 후 runtime 검증 필요)
 
 ## Phase 2 — 학습 MVP
 

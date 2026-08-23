@@ -21,6 +21,16 @@ Apple Silicon Mac에서 CosyVoice3 기반 음성 데이터 준비, LoRA 학습, 
 
 핵심 모델 자산과 CPU zero-shot clone, 초기 adapter를 사용한 Voice Package/synth/compare/narrate 경로까지 검증했습니다. MPS inference/training과 trained adapter 품질은 아직 `NOT TESTED`/`BLOCKED` 상태입니다.
 
+## Gradio UI prototype
+
+Gradio가 설치된 환경에서는 다음 명령으로 문장 추천·마이크 녹음·transcript·WAV 품질 검사를 시작할 수 있습니다.
+
+```bash
+python -m mac_voice ui
+```
+
+현재 UI는 녹음 품질 prototype이며, ASR 발음 일치 판정과 SwiftUI macOS 앱은 후속 단계입니다.
+
 ## 환경 진단
 
 ```bash

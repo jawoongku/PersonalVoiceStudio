@@ -18,6 +18,7 @@ from .compare import run_comparison
 from .narrate import run_narrate
 from .parquet import validate_data_list
 from .mps_smoke import run_mps_smoke
+from .ui_gradio import launch_ui
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
 
 
@@ -117,6 +118,7 @@ def build_parser() -> argparse.ArgumentParser:
     resume_smoke.add_argument("--output", required=True)
     resume_smoke.add_argument("--model-dir", default=None)
     resume_smoke.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    subparsers.add_parser("ui", help="launch the optional Gradio recording UI")
     return parser
 
 
@@ -124,6 +126,13 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)
+    if args.command == "ui":
+        try:
+            launch_ui()
+        except RuntimeError as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        return 0
     if args.command == "inspect-model":
         model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
         try:
