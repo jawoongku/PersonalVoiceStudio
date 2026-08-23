@@ -33,6 +33,12 @@ python -m mac_voice ui
 현재 UI는 녹음 품질 prototype이며, ASR 발음 일치 판정과 SwiftUI macOS 앱은 후속 단계입니다.
 품질 검사를 통과한 녹음은 UI에서 `data/my_voice/raw/`와 `transcripts.csv`에 자동 등록할 수 있습니다.
 
+새 작업 폴더는 다음 명령으로 초기화할 수 있습니다.
+
+```bash
+python -m mac_voice init-project --root ~/PersonalVoiceProject
+```
+
 ## 환경 진단
 
 ```bash

@@ -8,7 +8,7 @@
 
 ## Phase 1 — Python MVP
 
-- [ ] 프로젝트 생성 API/CLI
+- [x] 프로젝트 생성 API/CLI (`init-project`)
 - [x] 문장 추천 큐 (초기 정적 문장 세트)
 - [x] 녹음 파일 등록 및 transcript 입력 (Gradio prototype)
 - [x] 품질 검사 통과 녹음의 dataset/raw 복사 및 transcripts.csv 자동 등록

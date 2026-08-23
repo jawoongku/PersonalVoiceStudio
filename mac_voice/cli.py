@@ -19,12 +19,16 @@ from .narrate import run_narrate
 from .parquet import validate_data_list
 from .mps_smoke import run_mps_smoke
 from .ui_gradio import launch_ui
+from .project import initialize_project
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m mac_voice")
     subparsers = parser.add_subparsers(dest="command", required=True)
+    init_project = subparsers.add_parser("init-project", help="create a new voice project layout")
+    init_project.add_argument("--root", required=True, help="new project directory")
+    init_project.add_argument("--overwrite", action="store_true")
     doctor = subparsers.add_parser("doctor", help="inspect the local Mac/CosyVoice environment")
     doctor.add_argument("--model-dir", default=None, help="CosyVoice3 model directory")
     doctor.add_argument("--upstream-root", default=None, help="CosyVoice checkout directory")
@@ -124,6 +128,15 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "init-project":
+        try:
+            result = initialize_project(args.root, overwrite=args.overwrite)
+        except (OSError, FileExistsError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        for key, value in result.items():
+            print(f"[OK] {key}: {value}")
+        return 0
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)
     if args.command == "ui":
