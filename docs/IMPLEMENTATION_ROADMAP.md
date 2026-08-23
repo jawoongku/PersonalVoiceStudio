@@ -76,6 +76,7 @@
 - [x] 실제 사용자 parquet 1건 MPS forward/backward/LoRA gradient/optimizer step 검증
 - [x] 실제 사용자 train/dev parquet 전체 1-epoch MPS 학습·validation·checkpoint·metrics 검증
 - [x] MPS adapter·optimizer state 새 프로세스 resume 및 추가 step 검증
+- [x] MPS 학습 adapter의 Voice Package·synth·compare 연결 및 실제 WAV 검증
 - [ ] 장시간 학습 및 모델 관리
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)
 - [x] 비파괴적 학습 run 보관 후보 계산 기반

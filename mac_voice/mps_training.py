@@ -194,6 +194,6 @@ def run_user_parquet_mps_resume(
         raise RuntimeError("MPS resume gradient validation failed: " + "; ".join(problems))
     optimizer.step()
     output_path = Path(output).expanduser()
-    checkpoint = save_adapter_checkpoint(llm, output_path, step=start_step + 1, epoch=int(state_meta.get("epoch", 0)), val_loss=None, config={"device": "mps", "resumed_from": str(adapter)})
+    checkpoint = save_adapter_checkpoint(llm, output_path, step=start_step + 1, epoch=int(state_meta.get("epoch", 0)), val_loss=None, config={"device": "mps", "rank": 2, "alpha": 4, "dropout": 0.0, "resumed_from": str(adapter)})
     state_path = save_training_state(output_path.with_suffix(".state.pt"), optimizer=optimizer, scheduler=None, step=start_step + 1, epoch=int(state_meta.get("epoch", 0)), config={"device": "mps", "resumed_from": str(state)})
     return {"status": "ok", "device": str(device), "utt": utt, "start_step": start_step, "step": start_step + 1, "loss": float(loss.detach().cpu().item()), "checkpoint": str(checkpoint), "state": str(state_path), "matched_modules": len(matched), "trainable": stats.trainable}

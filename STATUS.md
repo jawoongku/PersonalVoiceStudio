@@ -160,12 +160,12 @@
 - [x] Implement and verify baseline MPS inference (LLM/Flow on MPS; HiFiGAN float64 F0 path on CPU).
 - [x] Verify baseline with a real local CosyVoice3 model and non-silent 24 kHz mono WAV.
 - [x] Verify zero-shot clone with a temporary reference WAV and local model (CPU only).
-- [ ] Connect the trained adapter to the CosyVoice3 inference graph for `synth`.
+- [x] Connect the MPS-trained/resumed adapter to the CosyVoice3 inference graph for `synth`; generated 6.32-second Korean WAV.
 - [x] Verify adapter injection and synth with a real base model and CPU-smoke adapter (quality evaluation remains pending).
 - [x] Add speaker embedding, speech-token, and parquet feature extraction.
 - [x] Wire model-specific feature extraction to a pinned/available CosyVoice checkout.
 - [x] Run feature extraction against real model assets and verify generated tensors/parquet (temporary fixture; user voice not tested).
-- [ ] Connect package builder to a real trained adapter and reference audio.
+- [x] Connect package builder to the real MPS-trained adapter and reference audio; `my_voice_mps_epoch` validated.
 - [ ] Apply LoRA helpers to the actual CosyVoice3 model and verify target modules.
 - [ ] Run the trainer on real MPS with a real CosyVoice batch.
 - [ ] Connect the validated train entrypoint to the actual CosyVoice3 model loader.
@@ -173,7 +173,7 @@
 - [ ] Connect the generic loop to real CosyVoice3 parquet batches and MPS device.
 - [ ] Validate real generated parquet schema and feature columns.
 - [ ] Install/provide an MPS-capable runtime and local model assets.
-- [ ] Verify compare/narrate with real model outputs.
+- [x] Verify `compare` with real MPS-trained adapter output; CAMPPlus similarity `0.919853` recorded.
 
 ## Blocked
 
