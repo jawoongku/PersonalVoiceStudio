@@ -76,3 +76,4 @@
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)
 - [x] 비파괴적 학습 run 보관 후보 계산 기반
 - [x] 실제 MPS tensor probe와 OS/runtime 불일치 진단(`mps-doctor`)
+- [x] 기존 환경을 보존하는 격리형 MPS 후보 환경 생성 스크립트

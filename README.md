@@ -56,6 +56,15 @@ conda run -n cosyvoice python -m mac_voice mps-doctor --json
 ```
 
 현재 이 Mac에서는 PyTorch 2.13.0이 macOS 26.5.2를 인식하지 못해 `os-runtime-mismatch`가 보고됩니다. PyTorch가 해당 macOS major를 명시적으로 지원하는 빌드로 교체되거나 지원되는 macOS에서 실행되기 전에는 MPS 학습을 PASS로 표시하지 않습니다.
+
+기존 환경을 변경하지 않고 후보 환경을 만들려면 다음 명령을 사용합니다. 기본값은 별도 `pvs-mps` 환경과 PyTorch 2.5.1이며, 실제 생성 전에는 dry-run으로 명령만 출력합니다.
+
+```bash
+make create-mps-env
+PVS_MPS_TORCH_VERSION=2.5.1 scripts/create_mps_env.sh
+```
+
+이미 같은 이름의 환경이 있으면 덮어쓰지 않고 중단합니다.
 품질 검사를 통과한 녹음은 UI에서 `data/my_voice/raw/`와 `transcripts.csv`에 자동 등록할 수 있습니다.
 같은 화면의 Voice Package TTS 영역에서 패키지를 선택해 음성 생성을 요청할 수 있습니다. 모델 경로와 CosyVoice 런타임이 준비되지 않은 경우 원인이 결과 창에 표시됩니다.
 성공한 생성은 `artifacts/tts_history.jsonl`에 기록되며 UI에서 최근 기록을 새로고침할 수 있습니다.

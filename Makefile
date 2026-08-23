@@ -1,4 +1,4 @@
-.PHONY: verify app check-app ui notarize mps-doctor
+.PHONY: verify app check-app ui notarize mps-doctor create-mps-env
 
 verify:
 	scripts/verify_all.sh
@@ -14,6 +14,9 @@ ui:
 
 mps-doctor:
 	conda run -n cosyvoice python -m mac_voice mps-doctor
+
+create-mps-env:
+	scripts/create_mps_env.sh --dry-run
 
 notarize:
 	scripts/notarize_macos_app.sh
