@@ -3,7 +3,7 @@ import unittest
 import wave
 from pathlib import Path
 
-from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, cancel_job_for_ui, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, narrate_for_ui, prepare_dataset_for_ui, register_recording, start_training_job_for_ui, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
+from mac_voice.ui_gradio import RECOMMENDED_SENTENCES, cancel_job_for_ui, compare_transcripts, inspect_recording, inspect_recording_inputs, job_status_for_ui, narrate_for_ui, prepare_dataset_for_ui, read_job_log_for_ui, register_recording, start_training_job_for_ui, synthesize_for_ui, transcribe_with_whisper, training_preflight_for_ui, validate_dataset_for_ui
 
 
 class GradioPrototypeTests(unittest.TestCase):
@@ -64,6 +64,9 @@ class GradioPrototypeTests(unittest.TestCase):
             job = create_job(Path(temp) / "run", command="train", config="training.yaml")
             report = start_training_job_for_ui("missing.train", "missing.dev", "missing.model", "out.pt", str(job), 1)
             self.assertIn("시작할 수 없습니다", report)
+
+    def test_job_log_reports_missing_file(self):
+        self.assertIn("로그 파일을 찾을 수 없습니다", read_job_log_for_ui("/tmp/missing-job.json"))
 
     def test_recording_inspection_requires_transcript(self):
         self.assertIn("transcript", inspect_recording("/tmp/missing.wav", ""))

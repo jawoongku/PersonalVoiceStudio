@@ -194,6 +194,14 @@ def cancel_job_for_ui(job_path: str) -> str:
     return f"작업 상태가 cancelled로 변경되었습니다.\nupdated_at: {job['updated_at']}"
 
 
+def read_job_log_for_ui(job_path: str, limit: int = 80) -> str:
+    log_path = Path(job_path).expanduser().parent / "job.log"
+    if not log_path.is_file():
+        return f"로그 파일을 찾을 수 없습니다: {log_path}"
+    lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    return "\n".join(lines[-limit:]) or "로그가 비어 있습니다."
+
+
 def start_training_job_for_ui(train_data: str, dev_data: str, model_dir: str, output: str, job_path: str, steps: int = 2) -> str:
     try:
         job_file = Path(job_path).expanduser()
@@ -297,6 +305,9 @@ def build_demo():
         job_refresh.click(job_status_for_ui, inputs=job_path, outputs=job_report)
         job_cancel = gr.Button("작업 취소 표시")
         job_cancel.click(cancel_job_for_ui, inputs=job_path, outputs=job_report)
+        job_log_refresh = gr.Button("학습 로그 새로고침")
+        job_log_report = gr.Textbox(label="최근 학습 로그", lines=10)
+        job_log_refresh.click(read_job_log_for_ui, inputs=job_path, outputs=job_log_report)
         gr.Markdown("## 학습 metrics")
         metrics_path = gr.Textbox(label="metrics.jsonl 경로", value="artifacts/runs/my_voice/metrics.jsonl")
         metrics_refresh = gr.Button("metrics 새로고침")
