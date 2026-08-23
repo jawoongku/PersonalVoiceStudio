@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct ContentView: View {
     private let refreshTimer = Timer.publish(every: 10, on: .main, in: .common).autoconnect()
@@ -63,6 +64,7 @@ struct ContentView: View {
                     if audioPlayer.isPlaying { audioPlayer.stop() }
                     else { do { try audioPlayer.play(url: output) } catch { errorMessage = "재생 오류: \(error.localizedDescription)" } }
                 }
+                Button("녹음 파일을 Finder에서 보기") { NSWorkspace.shared.activateFileViewerSelecting([output]) }
             }
             TextField("TTS 텍스트", text: $ttsText)
             Button(isSynthesizing ? "TTS 생성 중..." : "Voice Package TTS 생성") {
@@ -82,6 +84,7 @@ struct ContentView: View {
             .disabled(isSynthesizing)
             if let ttsOutput {
                 Button("생성 음성 재생") { do { try audioPlayer.play(url: ttsOutput) } catch { errorMessage = "재생 오류: \(error.localizedDescription)" } }
+                Button("생성 파일을 Finder에서 보기") { NSWorkspace.shared.activateFileViewerSelecting([ttsOutput]) }
             }
         }
         .padding()
