@@ -112,6 +112,9 @@ struct ContentView: View {
                     }
                 }
             }
+            WaveformView(samples: recorder.waveform, active: recorder.isRecording)
+                .frame(height: 72)
+                .background(Color.black.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
             if let validation = recordingValidation { Text(validation).font(.caption).foregroundStyle(.secondary) }
             if let output = recorder.lastOutput, !recorder.isRecording {
                 HStack {
@@ -216,5 +219,24 @@ struct ContentView: View {
             try handle.close()
             recordingValidation = "저장 완료: \(filename)"
         } catch { errorMessage = "학습 데이터 저장 오류: \(error.localizedDescription)" }
+    }
+}
+
+private struct WaveformView: View {
+    let samples: [Float]
+    let active: Bool
+
+    var body: some View {
+        GeometryReader { proxy in
+            HStack(alignment: .center, spacing: 2) {
+                ForEach(Array(samples.enumerated()), id: \.offset) { _, sample in
+                    Capsule()
+                        .fill(active ? Color.accentColor : Color.secondary.opacity(0.45))
+                        .frame(width: max(1, (proxy.size.width - 94) / 48), height: max(3, CGFloat(sample) * proxy.size.height))
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal, 8)
+        }
     }
 }
