@@ -77,6 +77,7 @@
 - [x] 실제 사용자 train/dev parquet 전체 1-epoch MPS 학습·validation·checkpoint·metrics 검증
 - [x] MPS adapter·optimizer state 새 프로세스 resume 및 추가 step 검증
 - [x] MPS 학습 adapter의 Voice Package·synth·compare 연결 및 실제 WAV 검증
+- [x] Voice Package adapter의 직접 MPS synth 및 화자 유사도 검증
 - [x] 학습 run 보관 계획 CLI·JSON 조회 연결(비파괴)
 - [x] run·Voice Package SHA-256 artifact manifest 생성·검증
 - [x] MPS 전체 학습 명령의 job 상태·metrics 연동
