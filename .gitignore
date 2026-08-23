@@ -1,0 +1,12 @@
+data/**/raw/
+data/**/prepared/
+data/*_prepared/
+data/**/transcripts.csv
+artifacts/
+output/
+*.wav
+*.flac
+*.m4a
+__pycache__/
+*.py[cod]
+.DS_Store

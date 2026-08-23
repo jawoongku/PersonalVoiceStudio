@@ -1,0 +1,358 @@
+"""CLI dispatcher. Commands are added incrementally by implementation phase."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+from .dataset import prepare_dataset, render_validation, validate_dataset
+from .doctor import run_doctor
+from .features import build_parquet, extract_embeddings, extract_speech_tokens, inspect_feature_inputs, validate_feature_artifacts
+from .package import build_voice_package
+from .config import load_config, validate_training_config
+from .baseline import _load_upstream, run_baseline, run_zero_shot
+from .adapter import inspect_lora_targets
+from .voice import require_adapter_inference_support, validate_voice_package
+from .synth import run_synth
+from .compare import run_comparison
+from .narrate import run_narrate
+from .parquet import validate_data_list
+from .mps_smoke import run_mps_smoke
+from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="python -m mac_voice")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    doctor = subparsers.add_parser("doctor", help="inspect the local Mac/CosyVoice environment")
+    doctor.add_argument("--model-dir", default=None, help="CosyVoice3 model directory")
+    doctor.add_argument("--upstream-root", default=None, help="CosyVoice checkout directory")
+    validate = subparsers.add_parser("validate-data", help="validate WAV and transcript input")
+    validate.add_argument("--dataset", required=True)
+    prepare = subparsers.add_parser("prepare", help="normalize audio and create train/dev manifests")
+    prepare.add_argument("--dataset", required=True)
+    prepare.add_argument("--output", default=None)
+    prepare.add_argument("--seed", type=int, default=42)
+    prepare.add_argument("--dev-ratio", type=float, default=0.1)
+    features = subparsers.add_parser("features", help="check feature extraction prerequisites")
+    features.add_argument("--dataset", required=True)
+    features.add_argument("--model-dir", default=None)
+    features.add_argument("--onnx-provider", choices=("auto", "coreml", "cpu"), default="auto")
+    features.add_argument("--speech-token-model", default=None)
+    features.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    features.add_argument("--skip-parquet", action="store_true")
+    package = subparsers.add_parser("package", help="build a reusable adapter-based Voice Package")
+    package.add_argument("--run", required=True)
+    package.add_argument("--name", required=True)
+    package.add_argument("--output", required=True)
+    package.add_argument("--base-model", default=None)
+    package.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    package.add_argument("--speaker-id", default="owner")
+    package.add_argument("--language", default="ko")
+    package.add_argument("--sample-rate", type=int, default=24000)
+    train = subparsers.add_parser("train", help="validate and run the local LoRA trainer")
+    train.add_argument("--config", required=True)
+    train.add_argument("--max-steps", type=int, default=None)
+    train.add_argument("--resume", default=None)
+    baseline = subparsers.add_parser("baseline", help="run base CosyVoice inference")
+    baseline.add_argument("--model-dir", default=None)
+    baseline.add_argument("--text", required=True)
+    baseline.add_argument("--output", required=True)
+    baseline.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    baseline.add_argument("--speaker-id", default=None)
+    clone = subparsers.add_parser("clone", help="run CosyVoice zero-shot reference inference")
+    clone.add_argument("--model-dir", default=None)
+    clone.add_argument("--reference", required=True)
+    clone.add_argument("--reference-text", required=True)
+    clone.add_argument("--text", required=True)
+    clone.add_argument("--output", required=True)
+    clone.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    synth = subparsers.add_parser("synth", help="validate a Voice Package for adapter inference")
+    synth.add_argument("--voice", required=True)
+    synth.add_argument("--text", required=True)
+    synth.add_argument("--output", required=True)
+    synth.add_argument("--model-dir", default=None)
+    compare = subparsers.add_parser("compare", help="compare base zero-shot and adapter output")
+    compare.add_argument("--voice", required=True)
+    compare.add_argument("--text", required=True)
+    compare.add_argument("--output-dir", required=True)
+    compare.add_argument("--model-dir", default=None)
+    compare.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    narrate = subparsers.add_parser("narrate", help="synthesize a long script in chunks")
+    narrate.add_argument("--voice", required=True)
+    narrate.add_argument("--input", required=True)
+    narrate.add_argument("--output", required=True)
+    narrate.add_argument("--model-dir", default=None)
+    narrate.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    narrate.add_argument("--max-chars", type=int, default=180)
+    parquet = subparsers.add_parser("validate-parquet", help="validate CosyVoice parquet data.list")
+    parquet.add_argument("--data-list", required=True)
+    parquet.add_argument("--require-features", action="store_true")
+    mps_smoke = subparsers.add_parser("mps-smoke", help="run a real MPS forward/backward/optimizer probe")
+    inspect_model = subparsers.add_parser("inspect-model", help="inspect runtime LoRA target modules")
+    inspect_model.add_argument("--model-dir", default=None)
+    inspect_model.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    inspect_model.add_argument("--target", action="append", dest="targets", default=None)
+    forward_smoke = subparsers.add_parser("model-forward-smoke", help="run one real CosyVoice3 CPU forward preflight")
+    forward_smoke.add_argument("--model-dir", default=None)
+    forward_smoke.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    backward_smoke = subparsers.add_parser("model-backward-smoke", help="run a real CosyVoice3 CPU LoRA backward preflight")
+    backward_smoke.add_argument("--model-dir", default=None)
+    backward_smoke.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    parquet_smoke = subparsers.add_parser("parquet-backward-smoke", help="run CPU LoRA backward on one real parquet row")
+    parquet_smoke.add_argument("--data-list", required=True)
+    parquet_smoke.add_argument("--model-dir", default=None)
+    parquet_smoke.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    parquet_train = subparsers.add_parser("parquet-train-smoke", help="run tiny CPU train/validation on real parquet rows")
+    parquet_train.add_argument("--train-data-list", required=True)
+    parquet_train.add_argument("--dev-data-list", required=True)
+    parquet_train.add_argument("--output", required=True)
+    parquet_train.add_argument("--model-dir", default=None)
+    parquet_train.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    parquet_train.add_argument("--steps", type=int, default=2)
+    resume_smoke = subparsers.add_parser("parquet-resume-smoke", help="reload adapter/optimizer state and take one CPU step")
+    resume_smoke.add_argument("--data-list", required=True)
+    resume_smoke.add_argument("--adapter", required=True)
+    resume_smoke.add_argument("--state", required=True)
+    resume_smoke.add_argument("--output", required=True)
+    resume_smoke.add_argument("--model-dir", default=None)
+    resume_smoke.add_argument("--upstream-root", default="/Users/jawoongku/CosyVoice")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    if args.command == "doctor":
+        return run_doctor(args.model_dir, args.upstream_root)
+    if args.command == "inspect-model":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            module = _load_upstream(args.upstream_root)
+            model = module.AutoModel(model_dir=model_dir, load_trt=False, fp16=False)
+            matches = inspect_lora_targets(model, tuple(args.targets) if args.targets else None)
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        for target, names in matches.items():
+            print(f"[OK] {target}: {len(names)} matches")
+            for name in names[:5]:
+                print(f"  - {name}")
+        return 0
+    if args.command == "model-forward-smoke":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            result = run_model_forward_smoke(model_dir, args.upstream_root)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] CPU CosyVoice3 forward: loss={result['loss']:.6f}, LoRA matches={result['matched_modules']}, trainable={result['trainable']}")
+        print("[INFO] synthetic batch only; backward and optimizer.step remain unverified")
+        return 0
+    if args.command == "model-backward-smoke":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            result = run_model_backward_smoke(model_dir, args.upstream_root)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] CPU CosyVoice3 backward/step: loss={result['loss']:.6f}, LoRA matches={result['matched_modules']}, trainable={result['trainable']}")
+        print("[INFO] synthetic batch and CPU only; MPS and user-data training remain unverified")
+        return 0
+    if args.command == "parquet-backward-smoke":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            result = run_parquet_backward_smoke(args.data_list, model_dir, args.upstream_root)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] parquet CPU backward/step: utt={result['utt']}, loss={result['loss']:.6f}, LoRA matches={result['matched_modules']}, trainable={result['trainable']}")
+        print("[INFO] real feature parquet row but CPU only; MPS multi-step training remains unverified")
+        return 0
+    if args.command == "parquet-train-smoke":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            result = run_parquet_train_smoke(args.train_data_list, args.dev_data_list, model_dir, args.upstream_root, args.output, steps=args.steps)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] parquet CPU train smoke: steps={result['steps']}, train_loss={result['train_loss']:.6f}, dev_loss={result['dev_loss']:.6f}")
+        print(f"[OK] adapter checkpoint: {result['checkpoint']}")
+        print(f"[OK] training state: {result['state']}")
+        print(f"[OK] metrics: {result['metrics']}")
+        print("[INFO] CPU-only smoke; MPS and full user dataset training remain unverified")
+        return 0
+    if args.command == "parquet-resume-smoke":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            result = run_parquet_resume_smoke(args.data_list, args.adapter, args.state, model_dir, args.upstream_root, args.output)
+        except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] fresh resume: previous_step={result['resume_step']}, resumed_loss={result['loss']:.6f}")
+        print(f"[OK] resumed adapter checkpoint: {result['checkpoint']}")
+        return 0
+    if args.command == "validate-data":
+        records, errors = validate_dataset(args.dataset)
+        print(render_validation(records, errors))
+        return 0 if not errors and all(not record.errors for record in records) else 1
+    if args.command == "prepare":
+        output = args.output or f"{args.dataset.rstrip('/')}_prepared"
+        try:
+            manifest = prepare_dataset(args.dataset, output, seed=args.seed, dev_ratio=args.dev_ratio)
+        except (OSError, RuntimeError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] prepared dataset: {output}")
+        print(f"[OK] train items: {len(manifest['splits']['train'])}")
+        print(f"[OK] dev items: {len(manifest['splits']['dev'])}")
+        return 0
+    if args.command == "features":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        errors = inspect_feature_inputs(args.dataset, model_dir)
+        if errors:
+            for error in errors:
+                print(f"[ERROR] {error}")
+            return 1
+        speech_model = args.speech_token_model or f"{model_dir}/speech_tokenizer_v3.onnx"
+        try:
+            model_root = str(model_dir)
+            embedding_model = f"{model_root}/campplus.onnx"
+            for split in ("train", "dev"):
+                split_dir = f"{args.dataset.rstrip('/')}/{split}"
+                extract_embeddings(split_dir, embedding_model)
+                extract_speech_tokens(split_dir, speech_model, args.onnx_provider)
+                feature_errors = validate_feature_artifacts(split_dir)
+                if feature_errors:
+                    raise ValueError("feature validation failed: " + "; ".join(feature_errors))
+                if not args.skip_parquet:
+                    build_parquet(split_dir, args.upstream_root)
+                print(f"[OK] features: {split}")
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        return 0
+    if args.command == "package":
+        base_model = args.base_model or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            destination = build_voice_package(
+                args.run,
+                args.name,
+                args.output,
+                base_model=base_model,
+                upstream_root=args.upstream_root,
+                speaker_id=args.speaker_id,
+                language=args.language,
+                sample_rate=args.sample_rate,
+            )
+        except (OSError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] Voice Package: {destination}")
+        return 0
+    if args.command == "train":
+        try:
+            config = load_config(args.config)
+        except (OSError, RuntimeError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        errors = validate_training_config(config)
+        if errors:
+            for error in errors:
+                print(f"[ERROR] config: {error}")
+            return 1
+        model_dir = config.get("model_dir") or config.get("model", {}).get("dir")
+        dataset_dir = config.get("dataset_dir")
+        if not Path(model_dir).is_dir():
+            print(f"[BLOCKED] model directory not found: {model_dir}")
+            return 2
+        if dataset_dir and not Path(dataset_dir).is_dir():
+            print(f"[BLOCKED] prepared dataset not found: {dataset_dir}")
+            return 2
+        if dataset_dir:
+            for split in ("train", "dev"):
+                data_list = Path(dataset_dir) / split / "parquet" / "data.list"
+                data_errors = validate_data_list(data_list, require_features=True)
+                if data_errors:
+                    for error in data_errors:
+                        print(f"[BLOCKED] {split}: {error}")
+                    return 2
+        if args.resume and not Path(args.resume).exists():
+            print(f"[ERROR] resume checkpoint not found: {args.resume}")
+            return 1
+        print("[BLOCKED] CosyVoice3 model/LoRA loading is available, but the model-specific training batch adapter is not connected yet")
+        print("[INFO] refusing to claim smoke-training success without a real batch forward, backward, and optimizer.step")
+        return 2
+    if args.command == "baseline":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            output = run_baseline(model_dir, args.text, args.output, upstream_root=args.upstream_root, speaker_id=args.speaker_id)
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] generated WAV: {output}")
+        return 0
+    if args.command == "clone":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            output = run_zero_shot(
+                model_dir,
+                args.reference,
+                args.reference_text,
+                args.text,
+                args.output,
+                upstream_root=args.upstream_root,
+            )
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] generated WAV: {output}")
+        return 0
+    if args.command == "synth":
+        voice, errors = validate_voice_package(args.voice)
+        if errors:
+            for error in errors:
+                print(f"[ERROR] {error}")
+            return 1
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            output = run_synth(args.voice, args.text, args.output, model_dir=model_dir)
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            print(f"[BLOCKED] {exc}")
+            return 2
+        print(f"[OK] generated WAV: {output}")
+        return 0
+    if args.command == "compare":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            report = run_comparison(args.voice, args.text, args.output_dir, model_dir=model_dir, upstream_root=args.upstream_root)
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            print(f"[BLOCKED] {exc}")
+            return 2
+        print(f"[OK] comparison report: {report}")
+        return 0
+    if args.command == "narrate":
+        model_dir = args.model_dir or "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        try:
+            output = run_narrate(args.voice, args.input, args.output, model_dir=model_dir, upstream_root=args.upstream_root, max_chars=args.max_chars)
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            print(f"[BLOCKED] {exc}")
+            return 2
+        print(f"[OK] narration WAV: {output}")
+        return 0
+    if args.command == "validate-parquet":
+        errors = validate_data_list(args.data_list, require_features=args.require_features)
+        if errors:
+            for error in errors:
+                print(f"[ERROR] {error}")
+            return 1
+        print(f"[OK] parquet data.list: {args.data_list}")
+        return 0
+    if args.command == "mps-smoke":
+        try:
+            result = run_mps_smoke()
+        except (ImportError, RuntimeError, FloatingPointError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] MPS smoke: device={result['device']} loss={result['loss']:.6f}")
+        return 0
+    raise AssertionError(f"unhandled command: {args.command}")
