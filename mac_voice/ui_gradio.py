@@ -15,6 +15,7 @@ from .history import append_tts_history, read_tts_history
 from .config import load_config, validate_training_config
 from .parquet import validate_data_list
 from .jobs import read_job
+from .metrics_view import summarize_metrics
 
 RECOMMENDED_SENTENCES = [
     "오늘 아침에는 평소보다 조금 일찍 일어났습니다.",
@@ -191,6 +192,11 @@ def build_demo():
         job_refresh = gr.Button("작업 상태 새로고침")
         job_report = gr.Textbox(label="작업 상태", lines=6)
         job_refresh.click(job_status_for_ui, inputs=job_path, outputs=job_report)
+        gr.Markdown("## 학습 metrics")
+        metrics_path = gr.Textbox(label="metrics.jsonl 경로", value="artifacts/runs/my_voice/metrics.jsonl")
+        metrics_refresh = gr.Button("metrics 새로고침")
+        metrics_report = gr.Textbox(label="최근 학습 metrics", lines=8)
+        metrics_refresh.click(summarize_metrics, inputs=metrics_path, outputs=metrics_report)
         gr.Markdown("## Voice Package TTS")
         voice_root = gr.Textbox(label="Voice Package 폴더", value="artifacts/voices")
         voice_choices = [item["path"] for item in list_voice_packages("artifacts/voices")]

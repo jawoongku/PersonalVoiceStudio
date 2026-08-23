@@ -66,6 +66,7 @@
 - [x] Added UI job-status refresh for filesystem-backed training jobs; 43 tests pass.
 - [x] Added `job-create` CLI for queued training metadata; verified create/status lifecycle.
 - [x] Added `job-update` CLI for status, step, and error transitions.
+- [x] Added UI metrics viewer for recent train/validation loss and learning rate; 44 tests pass.
 
 ## In progress
 
