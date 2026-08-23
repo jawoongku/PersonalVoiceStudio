@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var trainingSentence = "오늘 아침에는 평소보다 조금 일찍 일어났습니다."
     @State private var sentenceIndex = 0
     @State private var recordingValidation: String?
+    @State private var selectedTab = 0
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
     let projectDirectory: String
@@ -24,6 +25,12 @@ struct ContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Personal Voice Studio").font(.title)
+            Picker("화면", selection: $selectedTab) {
+                Text("모델 생성").tag(0)
+                Text("TTS 생성").tag(1)
+            }
+            .pickerStyle(.segmented)
+            if selectedTab == 0 {
             if let snapshot {
                 Text("작업 상태: \(snapshot.job.status)")
                 if let step = snapshot.job.step { Text("현재 step: \(step)").font(.caption) }
@@ -131,6 +138,24 @@ struct ContentView: View {
                 }
                 Button("녹음 파일을 Finder에서 보기") { NSWorkspace.shared.activateFileViewerSelecting([output]) }
             }
+            } else {
+                Text("Voice Package TTS").font(.headline)
+                Text("생성된 음성 모델을 선택하고 문장을 입력해 음성을 만듭니다.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if let snapshot {
+                    Picker("Voice Package", selection: $selectedVoicePath) {
+                        ForEach(snapshot.voices.filter(\.valid)) { voice in
+                            Text(voice.name).tag(Optional(voice.path))
+                        }
+                    }
+                    Picker("실행 장치", selection: $ttsDevice) {
+                        Text("CPU").tag("cpu")
+                        Text("MPS").tag("mps").disabled(!snapshot.mps.tensor_probe)
+                    }
+                    .pickerStyle(.segmented)
+                }
+            }
+            if selectedTab == 1 {
             TextField("TTS 텍스트", text: $ttsText)
             Button(isSynthesizing ? "TTS 생성 중..." : "Voice Package TTS 생성") {
                 guard !ttsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { errorMessage = "TTS 텍스트를 입력해 주세요."; return }
@@ -152,6 +177,7 @@ struct ContentView: View {
             if let ttsOutput {
                 Button("생성 음성 재생") { do { try audioPlayer.play(url: ttsOutput) } catch { errorMessage = "재생 오류: \(error.localizedDescription)" } }
                 Button("생성 파일을 Finder에서 보기") { NSWorkspace.shared.activateFileViewerSelecting([ttsOutput]) }
+            }
             }
         }
         .padding()
