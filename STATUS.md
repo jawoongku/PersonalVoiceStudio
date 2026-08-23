@@ -64,6 +64,7 @@
 - [x] Added UI action to normalize recordings and create train/dev manifests via `prepare`; 41 tests pass.
 - [x] Added UI training preflight for config, model directory, and feature parquet readiness; 42 tests pass.
 - [x] Added UI job-status refresh for filesystem-backed training jobs; 43 tests pass.
+- [x] Added `job-create` CLI for queued training metadata; verified create/status lifecycle.
 
 ## In progress
 

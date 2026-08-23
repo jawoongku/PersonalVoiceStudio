@@ -47,6 +47,12 @@ python -m mac_voice init-project --root ~/PersonalVoiceProject
 python -m mac_voice job-status --job artifacts/runs/my_voice/job.json
 ```
 
+새 작업 상태 파일을 만들려면:
+
+```bash
+python -m mac_voice job-create --output artifacts/runs/my_voice --config configs/my_voice.yaml
+```
+
 저장된 Voice Package를 점검합니다.
 
 ```bash

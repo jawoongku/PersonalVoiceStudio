@@ -22,6 +22,7 @@ from .ui_gradio import launch_ui
 from .project import initialize_project
 from .jobs import read_job
 from .catalog import list_voice_packages
+from .jobs import create_job
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
 
 
@@ -35,6 +36,10 @@ def build_parser() -> argparse.ArgumentParser:
     job_status.add_argument("--job", required=True, help="path to job.json")
     voices = subparsers.add_parser("list-voices", help="list and validate local Voice Packages")
     voices.add_argument("--root", default="artifacts/voices")
+    job_create = subparsers.add_parser("job-create", help="create a queued training job metadata file")
+    job_create.add_argument("--output", required=True, help="job output directory")
+    job_create.add_argument("--command", dest="job_command", default="train")
+    job_create.add_argument("--config", required=True)
     doctor = subparsers.add_parser("doctor", help="inspect the local Mac/CosyVoice environment")
     doctor.add_argument("--model-dir", default=None, help="CosyVoice3 model directory")
     doctor.add_argument("--upstream-root", default=None, help="CosyVoice checkout directory")
@@ -162,6 +167,14 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  language={voice['language']} sample_rate={voice.get('sample_rate')}")
             for error in voice["errors"]:
                 print(f"  error: {error}")
+        return 0
+    if args.command == "job-create":
+        try:
+            path = create_job(args.output, command=args.job_command, config=args.config)
+        except (OSError, FileExistsError, ValueError) as exc:
+            print(f"[ERROR] {exc}")
+            return 1
+        print(f"[OK] job: {path}")
         return 0
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)
