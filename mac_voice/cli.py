@@ -179,6 +179,11 @@ def main(argv: list[str] | None = None) -> int:
         for key in ("command", "config", "step", "error", "updated_at"):
             if key in job:
                 print(f"[INFO] {key}: {job[key]}")
+        metrics = job.get("metrics")
+        if isinstance(metrics, dict):
+            for key in ("train_loss", "dev_loss", "checkpoint", "state"):
+                if key in metrics:
+                    print(f"[INFO] {key}: {metrics[key]}")
         return 0
     if args.command == "list-voices":
         for voice in list_voice_packages(args.root):

@@ -80,6 +80,7 @@
 - [x] Added `parquet-train-job`, connecting real CPU parquet smoke training to queued/running/completed/failed job states.
 - [x] Ran the job command on the real user parquet for 1 CPU step: train_loss=3.892549, dev_loss=3.897105; fixed job step reporting (`steps` fallback).
 - [x] Added and ran `parquet-resume-job` on the generated adapter/state, confirming a fresh-model resume step completes.
+- [x] Enhanced `job-status` to show train/dev loss and checkpoint/state paths when available.
 
 ## In progress
 
