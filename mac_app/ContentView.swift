@@ -4,8 +4,10 @@ import AVFoundation
 
 struct ContentView: View {
     private let refreshTimer = Timer.publish(every: 10, on: .main, in: .common).autoconnect()
+
     @State private var snapshot: BridgeSnapshot?
     @State private var errorMessage: String?
+    @State private var selectedSection: WorkspaceSection? = .dashboard
     @State private var ttsText = ""
     @State private var ttsOutput: URL?
     @State private var isSynthesizing = false
@@ -15,174 +17,377 @@ struct ContentView: View {
     @State private var trainingSentence = "오늘 아침에는 평소보다 조금 일찍 일어났습니다."
     @State private var sentenceIndex = 0
     @State private var recordingValidation: String?
-    @State private var selectedTab = 0
+    @State private var recordings: [URL] = []
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
+
     let projectDirectory: String
     let jobPath: String
     let voicesPath: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Personal Voice Studio").font(.title)
-            Picker("화면", selection: $selectedTab) {
-                Text("모델 생성").tag(0)
-                Text("TTS 생성").tag(1)
+        NavigationSplitView {
+            List(WorkspaceSection.allCases, selection: $selectedSection) { section in
+                Label(section.title, systemImage: section.symbol)
+                    .tag(section)
             }
-            .pickerStyle(.segmented)
-            if selectedTab == 0 {
-            if let snapshot {
-                Text("작업 상태: \(snapshot.job.status)")
-                if let step = snapshot.job.step { Text("현재 step: \(step)").font(.caption) }
-                if let metrics = snapshot.job.metrics {
-                    if let train = metrics["train_loss"] { Text("train loss: \(train)").font(.caption) }
-                    if let dev = metrics["val_loss"] { Text("dev loss: \(dev)").font(.caption) }
-                    if let memory = metrics["mps_memory"] { Text(String(format: "MPS memory: %.1f MB", memory / 1_048_576.0)).font(.caption) }
-                    if let driver = metrics["driver_memory"] { Text(String(format: "MPS driver: %.1f MB", driver / 1_048_576.0)).font(.caption) }
-                }
-                if let jobError = snapshot.job.error, !jobError.isEmpty {
-                    Text(jobError).font(.caption).foregroundStyle(.red)
-                }
-                if snapshot.job.status == "running" {
-                    Button(isCancelling ? "취소 요청 중..." : "학습 취소") {
-                        isCancelling = true
-                        DispatchQueue.global(qos: .utility).async {
-                            do {
-                                try BridgeClient.cancelJob(job: jobPath, workingDirectory: projectDirectory)
-                                DispatchQueue.main.async { isCancelling = false; refresh() }
-                            } catch {
-                                DispatchQueue.main.async { errorMessage = "취소 오류: \(error.localizedDescription)"; isCancelling = false }
-                            }
-                        }
-                    }
-                    .disabled(isCancelling)
-                }
-                HStack(alignment: .top) {
-                    Image(systemName: snapshot.mps.tensor_probe ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(snapshot.mps.tensor_probe ? .green : .orange)
-                    VStack(alignment: .leading) {
-                        Text("MPS: \(snapshot.mps.status)").font(.headline)
-                        Text(snapshot.mps.action).font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-                Text("Voice Package: \(snapshot.voices.filter(\.valid).count)개 사용 가능")
-                Picker("TTS Voice", selection: $selectedVoicePath) {
-                    ForEach(snapshot.voices.filter(\.valid)) { voice in
-                        Text(voice.name).tag(Optional(voice.path))
-                    }
-                }
-                List(snapshot.voices) { voice in
-                    HStack { Text(voice.name); Spacer(); Text(voice.valid ? "사용 가능" : "오류") }
-                }
-                Text("학습 runs: \(snapshot.runs.count)")
-                List(snapshot.runs) { run in
-                    VStack(alignment: .leading) {
-                        HStack { Text(run.name); Spacer(); Text(run.job_status ?? "unknown") }
-                        if let checkpoint = run.checkpoint { Text(checkpoint).font(.caption).foregroundStyle(.secondary) }
-                        if let metrics = run.metrics { Text(metrics).font(.caption2).foregroundStyle(.secondary) }
-                        if let values = run.last_metrics, let train = values["train_loss"] { Text("train loss: \(train)").font(.caption2) }
-                        if let values = run.last_metrics, let val = values["val_loss"] { Text("val loss: \(val)").font(.caption2) }
-                        if let values = run.last_metrics, let lr = values["learning_rate"] { Text("learning rate: \(lr)").font(.caption2) }
-                    }
-                }
-                Picker("TTS 실행 장치", selection: $ttsDevice) {
-                    Text("CPU").tag("cpu")
-                    Text("MPS").tag("mps").disabled(!snapshot.mps.tensor_probe)
-                }
-                .pickerStyle(.segmented)
-            } else if let errorMessage {
-                Text(errorMessage).foregroundStyle(.red)
-            } else {
-                ProgressView("상태를 불러오는 중")
-            }
-            Button("새로고침") { refresh() }
-            Divider()
-            Text("학습용 문장 녹음").font(.headline)
-            Text("아래 문장을 그대로 읽고 녹음한 뒤, 검증을 통과하면 학습 데이터로 저장할 수 있습니다.")
-                .font(.caption).foregroundStyle(.secondary)
-            Text(trainingSentence).font(.title3).padding(.vertical, 4)
-            HStack {
-                Button("다음 문장") { nextTrainingSentence() }
-                Button(recorder.isRecording ? "녹음 중지" : "이 문장 녹음") {
-                    if recorder.isRecording { recorder.stop(); validateRecording() }
-                    else {
-                        let raw = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice/raw", isDirectory: true)
-                        try? FileManager.default.createDirectory(at: raw, withIntermediateDirectories: true)
-                        let url = raw.appendingPathComponent(String(format: "ui_%@.wav", UUID().uuidString))
-                        recorder.requestMicrophonePermission { granted in
-                            DispatchQueue.main.async {
-                                guard granted else { errorMessage = "마이크 권한이 필요합니다."; return }
-                                do { try recorder.start(to: url); recordingValidation = "녹음 중입니다..." }
-                                catch { errorMessage = "녹음 오류: \(error.localizedDescription)" }
-                            }
-                        }
-                    }
+            .navigationTitle("Voice Studio")
+            .listStyle(.sidebar)
+        } detail: {
+            Group {
+                switch selectedSection ?? .dashboard {
+                case .dashboard: dashboard
+                case .recording: recordingWorkspace
+                case .training: trainingWorkspace
+                case .tts: ttsWorkspace
                 }
             }
-            WaveformView(samples: recorder.waveform, active: recorder.isRecording)
-                .frame(height: 72)
-                .background(Color.black.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
-            if let validation = recordingValidation { Text(validation).font(.caption).foregroundStyle(.secondary) }
-            if let output = recorder.lastOutput, !recorder.isRecording {
-                HStack {
-                    Button("검증") { validateRecording() }
-                    Button("검증 통과 파일 저장") { saveTrainingRecording(output) }
-                        .disabled(!(recordingValidation?.hasPrefix("사용 가능") ?? false))
+            .navigationTitle((selectedSection ?? .dashboard).title)
+            .toolbar { toolbarContent }
+        }
+        .task { refresh(); refreshRecordings() }
+        .onReceive(refreshTimer) { _ in refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: .personalVoiceRefresh)) { _ in refresh() }
+        .alert("작업을 완료할 수 없습니다", isPresented: hasError) {
+            Button("확인", role: .cancel) { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "알 수 없는 오류가 발생했습니다.")
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            Button(action: refresh) {
+                Label("상태 새로고침", systemImage: "arrow.clockwise")
+            }
+            .help("상태 새로고침")
+            .keyboardShortcut("r", modifiers: [.command])
+        }
+
+        if snapshot?.job.status == "running" {
+            ToolbarItem(placement: .primaryAction) {
+                Button(role: .destructive, action: cancelTraining) {
+                    Label(isCancelling ? "취소 요청 중" : "학습 취소", systemImage: "stop.fill")
                 }
-            }
-            if let output = recorder.lastOutput { Text("녹음 파일: \(output.path)").font(.caption) }
-            if let output = recorder.lastOutput {
-                Button(audioPlayer.isPlaying ? "재생 중지" : "녹음 재생") {
-                    if audioPlayer.isPlaying { audioPlayer.stop() }
-                    else { do { try audioPlayer.play(url: output) } catch { errorMessage = "재생 오류: \(error.localizedDescription)" } }
-                }
-                Button("녹음 파일을 Finder에서 보기") { NSWorkspace.shared.activateFileViewerSelecting([output]) }
-            }
-            } else {
-                Text("Voice Package TTS").font(.headline)
-                Text("생성된 음성 모델을 선택하고 문장을 입력해 음성을 만듭니다.")
-                    .font(.caption).foregroundStyle(.secondary)
-                if let snapshot {
-                    Picker("Voice Package", selection: $selectedVoicePath) {
-                        ForEach(snapshot.voices.filter(\.valid)) { voice in
-                            Text(voice.name).tag(Optional(voice.path))
-                        }
-                    }
-                    Picker("실행 장치", selection: $ttsDevice) {
-                        Text("CPU").tag("cpu")
-                        Text("MPS").tag("mps").disabled(!snapshot.mps.tensor_probe)
-                    }
-                    .pickerStyle(.segmented)
-                }
-            }
-            if selectedTab == 1 {
-            TextField("TTS 텍스트", text: $ttsText)
-            Button(isSynthesizing ? "TTS 생성 중..." : "Voice Package TTS 생성") {
-                guard !ttsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { errorMessage = "TTS 텍스트를 입력해 주세요."; return }
-                guard let voicePath = selectedVoicePath ?? snapshot?.voices.first(where: { $0.valid })?.path else { errorMessage = "사용 가능한 Voice Package가 없습니다."; return }
-                let output = URL(fileURLWithPath: projectDirectory).appendingPathComponent("artifacts/swiftui_tts.wav")
-                let device = ttsDevice
-                isSynthesizing = true
-                let modelDirectory = ProcessInfo.processInfo.environment["PVS_MODEL_DIR"] ?? "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
-                DispatchQueue.global(qos: .userInitiated).async {
-                    do {
-                        try BridgeClient.synthesize(voice: voicePath, text: ttsText, output: output.path, modelDirectory: modelDirectory, workingDirectory: projectDirectory, device: device)
-                        DispatchQueue.main.async { ttsOutput = output; isSynthesizing = false }
-                    } catch {
-                        DispatchQueue.main.async { errorMessage = "TTS 오류: \(error.localizedDescription)"; isSynthesizing = false }
-                    }
-                }
-            }
-            .disabled(isSynthesizing)
-            if let ttsOutput {
-                Button("생성 음성 재생") { do { try audioPlayer.play(url: ttsOutput) } catch { errorMessage = "재생 오류: \(error.localizedDescription)" } }
-                Button("생성 파일을 Finder에서 보기") { NSWorkspace.shared.activateFileViewerSelecting([ttsOutput]) }
-            }
+                .disabled(isCancelling)
+                .help("실행 중인 학습 취소")
             }
         }
-        .padding()
-        .task { refresh() }
-        .onReceive(refreshTimer) { _ in refresh() }
+    }
+
+    private var dashboard: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                if let snapshot {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("현재 프로젝트").font(.title2)
+                        Text("녹음부터 Voice Package 생성, TTS까지의 상태를 확인합니다.")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    GroupBox("작업 상태") {
+                        Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 12) {
+                            GridRow {
+                                statusLabel(title: "학습", value: snapshot.job.status, symbol: jobSymbol(snapshot.job.status))
+                                statusLabel(title: "사용 가능한 Voice Package", value: "\(snapshot.voices.filter(\.valid).count)개", symbol: "waveform.badge.checkmark")
+                            }
+                            GridRow {
+                                statusLabel(title: "실행 장치", value: snapshot.mps.status, symbol: snapshot.mps.tensor_probe ? "cpu" : "exclamationmark.triangle")
+                                statusLabel(title: "학습 기록", value: "\(snapshot.runs.count)개", symbol: "clock.arrow.circlepath")
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
+                    }
+
+                    if let action = snapshot.mps.action.nonEmpty {
+                        LabeledContent("실행 장치 안내") {
+                            Text(action).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
+                        }
+                    }
+
+                    if let error = snapshot.job.error?.nonEmpty {
+                        ContentUnavailableView {
+                            Label("학습 상태를 확인하세요", systemImage: "exclamationmark.triangle")
+                        } description: {
+                            Text(error)
+                        }
+                    }
+
+                    GroupBox("최근 학습") {
+                        if snapshot.runs.isEmpty {
+                            Text("아직 학습 기록이 없습니다. 녹음을 저장한 뒤 학습을 시작하세요.")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            VStack(alignment: .leading, spacing: 10) {
+                                ForEach(snapshot.runs.prefix(5)) { run in
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        HStack {
+                                            Text(run.name)
+                                            Spacer()
+                                            Text(run.job_status ?? "상태 없음").foregroundStyle(.secondary)
+                                        }
+                                        if let checkpoint = run.checkpoint?.nonEmpty {
+                                            Text(checkpoint).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                        }
+                                    }
+                                    .contextMenu {
+                                        if let checkpoint = run.checkpoint?.nonEmpty {
+                                            Button("Finder에서 보기") {
+                                                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: checkpoint)])
+                                            }
+                                        }
+                                    }
+                                    if run.id != snapshot.runs.prefix(5).last?.id { Divider() }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    loadingState
+                }
+            }
+            .frame(maxWidth: 880, alignment: .leading)
+            .padding()
+        }
+    }
+
+    private var recordingWorkspace: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("학습용 문장을 녹음합니다").font(.title2)
+                    Text("문장을 읽고 녹음한 뒤 검증 결과를 확인하여 학습 데이터에 저장하세요.")
+                        .foregroundStyle(.secondary)
+                }
+
+                GroupBox("녹음할 문장") {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text(trainingSentence).font(.title3).textSelection(.enabled)
+                        HStack {
+                            Button("다음 문장", action: nextTrainingSentence)
+                            Spacer()
+                            Button(recorder.isRecording ? "녹음 중지" : "이 문장 녹음", action: toggleRecording)
+                                .keyboardShortcut(.space, modifiers: [])
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                GroupBox("입력 레벨") {
+                    WaveformView(samples: recorder.waveform, active: recorder.isRecording)
+                        .frame(height: 72)
+                        .accessibilityLabel(recorder.isRecording ? "녹음 입력 레벨" : "최근 녹음 입력 레벨")
+                }
+
+                if let validation = recordingValidation {
+                    LabeledContent("검증 결과") {
+                        Text(validation)
+                            .foregroundStyle(validation.hasPrefix("사용 가능") || validation.hasPrefix("저장 완료") ? .primary : .secondary)
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+
+                if let output = recorder.lastOutput, !recorder.isRecording {
+                    GroupBox("녹음 파일") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(output.lastPathComponent).font(.body).textSelection(.enabled)
+                            HStack {
+                                Button("검증", action: validateRecording)
+                                Button("학습 데이터로 저장") { saveTrainingRecording(output) }
+                                    .disabled(!(recordingValidation?.hasPrefix("사용 가능") ?? false))
+                                Spacer()
+                                Button(audioPlayer.isPlaying ? "재생 중지" : "녹음 재생") { togglePlayback(output) }
+                                Button("Finder에서 보기") { NSWorkspace.shared.activateFileViewerSelecting([output]) }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+
+                GroupBox("저장된 녹음 파일") {
+                    if recordings.isEmpty {
+                        Text("아직 저장된 녹음 파일이 없습니다.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        LazyVStack(alignment: .leading, spacing: 8) {
+                            ForEach(recordings, id: \.self) { recording in
+                                HStack {
+                                    Image(systemName: "waveform")
+                                        .foregroundStyle(Color.accentColor)
+                                    VStack(alignment: .leading) {
+                                        Text(recording.lastPathComponent)
+                                        Text(recordingDuration(recording))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Button("재생") { togglePlayback(recording) }
+                                    Button("Finder") { NSWorkspace.shared.activateFileViewerSelecting([recording]) }
+                                }
+                                if recording != recordings.last { Divider() }
+                            }
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: 760, alignment: .leading)
+            .padding()
+        }
+    }
+
+    private var trainingWorkspace: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("학습 상태").font(.title2)
+                    Text("현재 학습 작업과 최근 지표를 확인합니다. 학습 시작과 설정 변경은 기존 실행 도구에서 관리됩니다.")
+                        .foregroundStyle(.secondary)
+                }
+
+                if let snapshot {
+                    GroupBox("현재 작업") {
+                        Form {
+                            LabeledContent("상태", value: snapshot.job.status)
+                            if let step = snapshot.job.step { LabeledContent("현재 step", value: String(step)) }
+                            if let command = snapshot.job.command?.nonEmpty {
+                                LabeledContent("명령") { Text(command).lineLimit(2).textSelection(.enabled) }
+                            }
+                            if let metrics = snapshot.job.metrics {
+                                if let value = metrics["train_loss"] { LabeledContent("Train loss", value: formattedMetric(value)) }
+                                if let value = metrics["val_loss"] { LabeledContent("Validation loss", value: formattedMetric(value)) }
+                                if let value = metrics["mps_memory"] { LabeledContent("MPS memory", value: formattedBytes(value)) }
+                            }
+                        }
+                    }
+
+                    if snapshot.job.status == "running" {
+                        Button(role: .destructive, action: cancelTraining) {
+                            Label(isCancelling ? "취소 요청 중…" : "학습 취소", systemImage: "stop.fill")
+                        }
+                        .disabled(isCancelling)
+                    }
+
+                    GroupBox("학습 기록") {
+                        if snapshot.runs.isEmpty {
+                            Text("표시할 학습 기록이 없습니다.").foregroundStyle(.secondary)
+                        } else {
+                            ForEach(snapshot.runs) { run in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text(run.name)
+                                        Spacer()
+                                        Text(run.job_status ?? "상태 없음").foregroundStyle(.secondary)
+                                    }
+                                    if let values = run.last_metrics {
+                                        HStack(spacing: 16) {
+                                            if let train = values["train_loss"] { Text("Train \(formattedMetric(train))") }
+                                            if let val = values["val_loss"] { Text("Validation \(formattedMetric(val))") }
+                                            if let lr = values["learning_rate"] { Text("LR \(formattedMetric(lr))") }
+                                        }
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .padding(.vertical, 5)
+                            }
+                        }
+                    }
+                } else {
+                    loadingState
+                }
+            }
+            .frame(maxWidth: 760, alignment: .leading)
+            .padding()
+        }
+    }
+
+    private var ttsWorkspace: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Voice Package TTS").font(.title2)
+                    Text("Voice Package를 선택하고 텍스트를 입력해 음성을 생성합니다.")
+                        .foregroundStyle(.secondary)
+                }
+
+                if let snapshot {
+                    if snapshot.voices.filter(\.valid).isEmpty {
+                        ContentUnavailableView {
+                            Label("사용 가능한 Voice Package가 없습니다", systemImage: "waveform.badge.exclamationmark")
+                        } description: {
+                            Text("학습이 완료된 Voice Package를 준비한 후 다시 시도하세요.")
+                        }
+                    } else {
+                        Form {
+                            Picker("Voice Package", selection: $selectedVoicePath) {
+                                ForEach(snapshot.voices.filter(\.valid)) { voice in
+                                    Text(voice.name).tag(Optional(voice.path))
+                                }
+                            }
+                            Picker("실행 장치", selection: $ttsDevice) {
+                                Text("CPU").tag("cpu")
+                                Text("MPS").tag("mps").disabled(!snapshot.mps.tensor_probe)
+                            }
+                            TextField("생성할 텍스트", text: $ttsText, axis: .vertical)
+                                .lineLimit(3...8)
+                        }
+
+                        HStack {
+                            Button(isSynthesizing ? "생성 중…" : "음성 생성", action: synthesize)
+                                .disabled(isSynthesizing || ttsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            if isSynthesizing { ProgressView().controlSize(.small) }
+                        }
+
+                        if let output = ttsOutput {
+                            GroupBox("생성된 음성") {
+                                HStack {
+                                    Text(output.lastPathComponent)
+                                    Spacer()
+                                    Button(audioPlayer.isPlaying ? "재생 중지" : "재생") { togglePlayback(output) }
+                                    Button("Finder에서 보기") { NSWorkspace.shared.activateFileViewerSelecting([output]) }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                    }
+                } else {
+                    loadingState
+                }
+            }
+            .frame(maxWidth: 760, alignment: .leading)
+            .padding()
+        }
+    }
+
+    private var loadingState: some View {
+        ContentUnavailableView {
+            Label("상태를 불러오는 중", systemImage: "arrow.triangle.2.circlepath")
+        } description: {
+            Text("프로젝트와 Voice Package 상태를 확인하고 있습니다.")
+        }
+    }
+
+    private var hasError: Binding<Bool> {
+        Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
+    }
+
+    private func statusLabel(title: String, value: String, symbol: String) -> some View {
+        LabeledContent {
+            Text(value).foregroundStyle(.primary)
+        } label: {
+            Label(title, systemImage: symbol).foregroundStyle(.secondary)
+        }
+    }
+
+    private func jobSymbol(_ status: String) -> String {
+        switch status {
+        case "running": return "progress.indicator"
+        case "completed", "succeeded": return "checkmark.circle"
+        case "failed", "cancelled": return "exclamationmark.triangle"
+        default: return "clock"
+        }
     }
 
     private func refresh() {
@@ -194,12 +399,56 @@ struct ContentView: View {
                     if let configured = ProcessInfo.processInfo.environment["PVS_TTS_DEVICE"], configured == "mps", value.mps.tensor_probe {
                         ttsDevice = configured
                     }
-                    if selectedVoicePath == nil { selectedVoicePath = value.voices.first(where: { $0.valid })?.path }
+                    if selectedVoicePath == nil || !value.voices.contains(where: { $0.path == selectedVoicePath && $0.valid }) {
+                        selectedVoicePath = value.voices.first(where: { $0.valid })?.path
+                    }
                     errorMessage = nil
                 }
             } catch {
-                DispatchQueue.main.async { errorMessage = "Python bridge 오류: \(error.localizedDescription)" }
+                DispatchQueue.main.async { errorMessage = "프로젝트 상태를 불러오지 못했습니다. \(error.localizedDescription)" }
             }
+        }
+    }
+
+    private func cancelTraining() {
+        isCancelling = true
+        DispatchQueue.global(qos: .utility).async {
+            do {
+                try BridgeClient.cancelJob(job: jobPath, workingDirectory: projectDirectory)
+                DispatchQueue.main.async { isCancelling = false; refresh() }
+            } catch {
+                DispatchQueue.main.async { errorMessage = "학습 취소 요청을 보내지 못했습니다. \(error.localizedDescription)"; isCancelling = false }
+            }
+        }
+    }
+
+    private func toggleRecording() {
+        if recorder.isRecording {
+            recorder.stop()
+            validateRecording()
+            return
+        }
+
+        let raw = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice/raw", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: raw, withIntermediateDirectories: true)
+            let url = raw.appendingPathComponent("ui_\(UUID().uuidString).wav")
+            recorder.requestMicrophonePermission { granted in
+                DispatchQueue.main.async {
+                    guard granted else {
+                        errorMessage = "마이크 권한이 필요합니다. 시스템 설정에서 Personal Voice Studio의 마이크 접근을 허용하세요."
+                        return
+                    }
+                    do {
+                        try recorder.start(to: url)
+                        recordingValidation = "녹음 중입니다. 완료되면 녹음 중지를 선택하세요."
+                    } catch {
+                        errorMessage = "녹음을 시작하지 못했습니다. \(error.localizedDescription)"
+                    }
+                }
+            }
+        } catch {
+            errorMessage = "녹음 저장 위치를 준비하지 못했습니다. \(error.localizedDescription)"
         }
     }
 
@@ -218,15 +467,24 @@ struct ContentView: View {
     }
 
     private func validateRecording() {
-        guard let output = recorder.lastOutput else { recordingValidation = "녹음 파일이 없습니다."; return }
+        guard let output = recorder.lastOutput else {
+            recordingValidation = "검증할 녹음 파일이 없습니다."
+            return
+        }
         do {
             let audio = try AVAudioFile(forReading: output)
             let seconds = Double(audio.length) / audio.processingFormat.sampleRate
             let channels = audio.processingFormat.channelCount
-            if seconds <= 0 || seconds > 30 { recordingValidation = "재녹음 필요: 길이는 0초 초과 30초 이하여야 합니다." }
-            else if channels != 1 { recordingValidation = "재녹음 검토: mono 녹음을 권장합니다. (현재 \(channels)ch)" }
-            else { recordingValidation = String(format: "사용 가능: %.2f초, %.0fHz, mono. 문장 일치 여부를 확인한 뒤 저장하세요.", seconds, audio.processingFormat.sampleRate) }
-        } catch { recordingValidation = "검증 오류: \(error.localizedDescription)" }
+            if seconds <= 0 || seconds > 30 {
+                recordingValidation = "재녹음 필요: 길이는 0초 초과 30초 이하여야 합니다."
+            } else if channels != 1 {
+                recordingValidation = "재녹음 검토: mono 녹음을 권장합니다. (현재 \(channels)ch)"
+            } else {
+                recordingValidation = String(format: "사용 가능: %.2f초, %.0fHz, mono. 문장 일치 여부를 확인한 뒤 저장하세요.", seconds, audio.processingFormat.sampleRate)
+            }
+        } catch {
+            recordingValidation = "검증 오류: \(error.localizedDescription)"
+        }
     }
 
     private func saveTrainingRecording(_ output: URL) {
@@ -244,7 +502,94 @@ struct ContentView: View {
             handle.write(Data(line.utf8))
             try handle.close()
             recordingValidation = "저장 완료: \(filename)"
-        } catch { errorMessage = "학습 데이터 저장 오류: \(error.localizedDescription)" }
+            refreshRecordings()
+        } catch {
+            errorMessage = "학습 데이터를 저장하지 못했습니다. \(error.localizedDescription)"
+        }
+    }
+
+    private func refreshRecordings() {
+        let root = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice/raw", isDirectory: true)
+        recordings = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil))?
+            .filter { $0.pathExtension.lowercased() == "wav" }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent } ?? []
+    }
+
+    private func recordingDuration(_ url: URL) -> String {
+        guard let audio = try? AVAudioFile(forReading: url) else { return "WAV 읽기 실패" }
+        let seconds = Double(audio.length) / audio.processingFormat.sampleRate
+        return String(format: "%.2f초 · %.0fHz · %uch", seconds, audio.processingFormat.sampleRate, audio.processingFormat.channelCount)
+    }
+
+    private func synthesize() {
+        guard !ttsText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "생성할 텍스트를 입력하세요."
+            return
+        }
+        guard let voicePath = selectedVoicePath ?? snapshot?.voices.first(where: { $0.valid })?.path else {
+            errorMessage = "사용 가능한 Voice Package가 없습니다."
+            return
+        }
+        let output = URL(fileURLWithPath: projectDirectory).appendingPathComponent("artifacts/swiftui_tts.wav")
+        let device = ttsDevice
+        let text = ttsText
+        isSynthesizing = true
+        let modelDirectory = ProcessInfo.processInfo.environment["PVS_MODEL_DIR"] ?? "/Users/jawoongku/Models/Fun-CosyVoice3-0.5B"
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try BridgeClient.synthesize(voice: voicePath, text: text, output: output.path, modelDirectory: modelDirectory, workingDirectory: projectDirectory, device: device)
+                DispatchQueue.main.async { ttsOutput = output; isSynthesizing = false }
+            } catch {
+                DispatchQueue.main.async { errorMessage = "음성을 생성하지 못했습니다. \(error.localizedDescription)"; isSynthesizing = false }
+            }
+        }
+    }
+
+    private func togglePlayback(_ url: URL) {
+        if audioPlayer.isPlaying {
+            audioPlayer.stop()
+        } else {
+            do {
+                try audioPlayer.play(url: url)
+            } catch {
+                errorMessage = "오디오를 재생하지 못했습니다. \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private func formattedMetric(_ value: Double) -> String {
+        String(format: "%.4f", value)
+    }
+
+    private func formattedBytes(_ value: Double) -> String {
+        ByteCountFormatter.string(fromByteCount: Int64(value), countStyle: .memory)
+    }
+}
+
+private enum WorkspaceSection: String, CaseIterable, Identifiable {
+    case dashboard
+    case recording
+    case training
+    case tts
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .dashboard: return "대시보드"
+        case .recording: return "녹음"
+        case .training: return "학습"
+        case .tts: return "TTS"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .dashboard: return "rectangle.3.group"
+        case .recording: return "mic"
+        case .training: return "cpu"
+        case .tts: return "waveform"
+        }
     }
 }
 
@@ -265,4 +610,12 @@ private struct WaveformView: View {
             .padding(.horizontal, 8)
         }
     }
+}
+
+private extension String {
+    var nonEmpty: String? { isEmpty ? nil : self }
+}
+
+extension Notification.Name {
+    static let personalVoiceRefresh = Notification.Name("PersonalVoiceStudio.refresh")
 }
