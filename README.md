@@ -6,6 +6,12 @@ Apple Silicon Mac에서 CosyVoice3 기반 음성 데이터 준비, LoRA 학습, 
 
 현재 구현은 upstream CosyVoice를 수정하지 않고 `/Users/jawoongku/CosyVoice`를 wrapper로 사용합니다. 기본 모델 경로는 `COSYVOICE_MODEL_DIR` 또는 `/Users/jawoongku/Models/Fun-CosyVoice3-0.5B`입니다.
 
+로컬 전체 검증은 다음 명령으로 실행합니다.
+
+```bash
+scripts/verify_all.sh
+```
+
 ## 현재 상태
 
 구현 및 단위 검증 완료:
