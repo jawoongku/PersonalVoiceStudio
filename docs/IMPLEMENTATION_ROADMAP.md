@@ -74,3 +74,4 @@
 - [ ] MPS 호환 runtime
 - [ ] 장시간 학습 및 모델 관리
 - [x] 학습 run·checkpoint 목록 조회 기반 (`list-runs`)
+- [x] 비파괴적 학습 run 보관 후보 계산 기반

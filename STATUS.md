@@ -111,6 +111,7 @@
 - [x] Integrated release `.app` build and bundle smoke-check into `scripts/verify_all.sh`.
 - [x] Extended Swift CI to build and smoke-check the `.app` bundle.
 - [x] Added `list-runs` for local training run, job status, checkpoint, and metrics discovery; 62 tests passed at introduction.
+- [x] Added non-destructive retention planning for training runs; no automatic deletion is performed; 64 tests pass.
 - [x] Extended the Python/Swift bridge snapshot with training run catalog data.
 - [x] SwiftUI run list now shows checkpoint paths for model management handoff.
 - [x] SwiftUI run list also shows metrics file paths.
