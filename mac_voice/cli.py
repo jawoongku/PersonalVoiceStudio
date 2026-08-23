@@ -467,7 +467,8 @@ def main(argv: list[str] | None = None) -> int:
             progress = None
             if args.job:
                 progress = lambda step, metrics: update_job(args.job, "running", step=step, metrics=metrics)
-            result = run_user_parquet_mps_train(args.train_data_list, args.dev_data_list, args.model_dir, args.output, args.upstream_root, progress=progress)
+            cancel_check = lambda: bool(args.job and read_job(args.job).get("status") == "cancelled")
+            result = run_user_parquet_mps_train(args.train_data_list, args.dev_data_list, args.model_dir, args.output, args.upstream_root, progress=progress, should_cancel=cancel_check)
         except (ImportError, OSError, RuntimeError, ValueError, FloatingPointError, KeyError) as exc:
             if args.job:
                 try:
@@ -476,7 +477,9 @@ def main(argv: list[str] | None = None) -> int:
                     pass
             print(f"[ERROR] {exc}")
             return 1
-        if args.job:
+        if args.job and result.get("status") == "cancelled":
+            update_job(args.job, "cancelled", step=result.get("steps"), metrics=result)
+        elif args.job:
             update_job(args.job, "completed", step=result.get("steps"), metrics=result)
         print(json.dumps(result, ensure_ascii=False))
         return 0

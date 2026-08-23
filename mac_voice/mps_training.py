@@ -113,6 +113,7 @@ def run_user_parquet_mps_train(
     rank: int = 2,
     alpha: int = 4,
     progress: Callable[[int, dict[str, object]], None] | None = None,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> dict[str, object]:
     import torch
     from .checkpoint import save_adapter_checkpoint
@@ -134,6 +135,8 @@ def run_user_parquet_mps_train(
     metrics = MetricsLogger(output_path.with_suffix(".metrics.jsonl"))
     last_loss = None
     for step, row in enumerate(train_rows, start=1):
+        if should_cancel is not None and should_cancel():
+            return {"status": "cancelled", "device": str(device), "steps": step - 1, "train_rows": len(train_rows), "dev_rows": len(dev_rows)}
         utt = row.pop("utt")
         batch = move_batch(row, device)
         optimizer.zero_grad(set_to_none=True)
