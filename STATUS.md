@@ -100,6 +100,7 @@
 - [x] Updated roadmap to reflect the implemented Python subprocess/JSON bridge; SwiftUI shell remains separate.
 - [x] Added parse-checked SwiftUI shell sources in `mac_app/` for bridge status and Voice Package listing.
 - [x] Added and validated a Swift Package manifest for opening the shell in Xcode or SwiftPM.
+- [x] Built the macOS SwiftUI executable successfully with `swift build`.
 
 ## In progress
 
