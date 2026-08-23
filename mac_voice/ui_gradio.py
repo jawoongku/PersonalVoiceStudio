@@ -209,7 +209,9 @@ def start_training_job_for_ui(train_data: str, dev_data: str, model_dir: str, ou
         command = [sys.executable, "-m", "mac_voice", "parquet-train-job", "--train-data-list", train_data, "--dev-data-list", dev_data, "--model-dir", model_dir, "--output", output, "--job", job_path, "--steps", str(int(steps))]
         log_path = job_file.parent / "job.log"
         with log_path.open("a", encoding="utf-8") as log:
-            subprocess.Popen(command, start_new_session=True, stdout=log, stderr=subprocess.STDOUT)
+            process = subprocess.Popen(command, start_new_session=True, stdout=log, stderr=subprocess.STDOUT)
+        from .jobs import update_job
+        update_job(job_file, "queued", pid=process.pid)
     except (OSError, FileExistsError, ValueError) as exc:
         return f"학습 작업을 시작할 수 없습니다: {exc}"
     return f"학습 작업을 시작했습니다.\njob: {job_path}\nlog: {log_path}"

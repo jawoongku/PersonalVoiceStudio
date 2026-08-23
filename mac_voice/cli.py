@@ -183,7 +183,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[ERROR] {exc}")
             return 1
         print(f"[OK] status: {job['status']}")
-        for key in ("command", "config", "step", "package", "error", "updated_at"):
+        for key in ("command", "config", "pid", "step", "package", "error", "updated_at"):
             if key in job and job[key] is not None:
                 print(f"[INFO] {key}: {job[key]}")
         metrics = job.get("metrics")
