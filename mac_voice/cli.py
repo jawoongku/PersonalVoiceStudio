@@ -21,6 +21,7 @@ from .mps_smoke import run_mps_smoke
 from .ui_gradio import launch_ui
 from .project import initialize_project
 from .jobs import read_job
+from .catalog import list_voice_packages
 from .upstream_smoke import run_model_backward_smoke, run_model_forward_smoke, run_parquet_backward_smoke, run_parquet_resume_smoke, run_parquet_train_smoke
 
 
@@ -32,6 +33,8 @@ def build_parser() -> argparse.ArgumentParser:
     init_project.add_argument("--overwrite", action="store_true")
     job_status = subparsers.add_parser("job-status", help="read a filesystem-backed training job status")
     job_status.add_argument("--job", required=True, help="path to job.json")
+    voices = subparsers.add_parser("list-voices", help="list and validate local Voice Packages")
+    voices.add_argument("--root", default="artifacts/voices")
     doctor = subparsers.add_parser("doctor", help="inspect the local Mac/CosyVoice environment")
     doctor.add_argument("--model-dir", default=None, help="CosyVoice3 model directory")
     doctor.add_argument("--upstream-root", default=None, help="CosyVoice checkout directory")
@@ -150,6 +153,15 @@ def main(argv: list[str] | None = None) -> int:
         for key in ("command", "config", "step", "error", "updated_at"):
             if key in job:
                 print(f"[INFO] {key}: {job[key]}")
+        return 0
+    if args.command == "list-voices":
+        for voice in list_voice_packages(args.root):
+            status = "valid" if voice["valid"] else "invalid"
+            print(f"[{status}] {voice['name']} ({voice['path']})")
+            if voice.get("language"):
+                print(f"  language={voice['language']} sample_rate={voice.get('sample_rate')}")
+            for error in voice["errors"]:
+                print(f"  error: {error}")
         return 0
     if args.command == "doctor":
         return run_doctor(args.model_dir, args.upstream_root)

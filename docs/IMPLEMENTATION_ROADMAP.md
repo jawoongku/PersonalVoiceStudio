@@ -18,6 +18,7 @@
 ## Phase 2 — 학습 MVP
 
 - [x] Python job 상태 파일 및 조회 CLI 기반 (`job.json`, `job-status`)
+- [x] Voice Package 목록·유효성 검증 CLI (`list-voices`)
 - [ ] 실제 사용자 dataset 학습 UI
 - [ ] loss/로그/취소/resume 표시
 - [ ] Voice Package 목록과 검증

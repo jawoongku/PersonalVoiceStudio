@@ -45,6 +45,12 @@ python -m mac_voice init-project --root ~/PersonalVoiceProject
 python -m mac_voice job-status --job artifacts/runs/my_voice/job.json
 ```
 
+저장된 Voice Package를 점검합니다.
+
+```bash
+python -m mac_voice list-voices --root artifacts/voices
+```
+
 ## 환경 진단
 
 ```bash
