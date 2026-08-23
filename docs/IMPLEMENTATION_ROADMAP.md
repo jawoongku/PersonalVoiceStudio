@@ -33,8 +33,9 @@
 - [x] Python job 상태 파일 및 조회 CLI 기반 (`job.json`, `job-status`)
 - [x] Voice Package 목록·유효성 검증 CLI (`list-voices`)
 - [ ] 실제 사용자 dataset 학습 UI
-- [ ] loss/로그/취소/resume 표시
-- [ ] Voice Package 목록과 검증
+- [x] loss/로그 표시
+- [ ] 학습 취소/resume UI
+- [x] Voice Package 목록과 검증
 
 ## Phase 3 — TTS MVP
 
@@ -43,7 +44,7 @@
 - [x] 기존 adapter 합성 엔진 연결 (환경·모델 준비 시 실행)
 - [x] 생성 WAV UI 재생 출력
 - [x] TTS 생성 히스토리 기록·조회 (`artifacts/tts_history.jsonl`)
-- [ ] 오디오 재생·저장·히스토리
+- [x] 오디오 재생·저장·히스토리
 
 ## Phase 4 — macOS 제품화
 
@@ -56,7 +57,7 @@
 ## Phase 5 — 품질 개선
 
 - [ ] 적응형 문장 추천
-- [ ] ASR transcript 비교
+- [x] ASR transcript 비교 기반 및 선택적 Whisper 연결
 - [ ] 화자 유사도 평가
 - [ ] MPS 호환 runtime
 - [ ] 장시간 학습 및 모델 관리
