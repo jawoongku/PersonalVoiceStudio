@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import AVFoundation
 
 struct ContentView: View {
     private let refreshTimer = Timer.publish(every: 10, on: .main, in: .common).autoconnect()
@@ -11,6 +12,9 @@ struct ContentView: View {
     @State private var isCancelling = false
     @State private var selectedVoicePath: String?
     @State private var ttsDevice = "cpu"
+    @State private var trainingSentence = "오늘 아침에는 평소보다 조금 일찍 일어났습니다."
+    @State private var sentenceIndex = 0
+    @State private var recordingValidation: String?
     @StateObject private var recorder = Recorder()
     @StateObject private var audioPlayer = AudioPlayer()
     let projectDirectory: String
@@ -85,16 +89,35 @@ struct ContentView: View {
                 ProgressView("상태를 불러오는 중")
             }
             Button("새로고침") { refresh() }
-            Button(recorder.isRecording ? "녹음 중지" : "마이크 녹음 시작") {
-                if recorder.isRecording { recorder.stop() }
-                else {
-                    let url = URL(fileURLWithPath: projectDirectory).appendingPathComponent("artifacts/ui_recording.wav")
-                    recorder.requestMicrophonePermission { granted in
-                        DispatchQueue.main.async {
-                            guard granted else { errorMessage = "마이크 권한이 필요합니다."; return }
-                            do { try recorder.start(to: url) } catch { errorMessage = "녹음 오류: \(error.localizedDescription)" }
+            Divider()
+            Text("학습용 문장 녹음").font(.headline)
+            Text("아래 문장을 그대로 읽고 녹음한 뒤, 검증을 통과하면 학습 데이터로 저장할 수 있습니다.")
+                .font(.caption).foregroundStyle(.secondary)
+            Text(trainingSentence).font(.title3).padding(.vertical, 4)
+            HStack {
+                Button("다음 문장") { nextTrainingSentence() }
+                Button(recorder.isRecording ? "녹음 중지" : "이 문장 녹음") {
+                    if recorder.isRecording { recorder.stop(); validateRecording() }
+                    else {
+                        let raw = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice/raw", isDirectory: true)
+                        try? FileManager.default.createDirectory(at: raw, withIntermediateDirectories: true)
+                        let url = raw.appendingPathComponent(String(format: "ui_%@.wav", UUID().uuidString))
+                        recorder.requestMicrophonePermission { granted in
+                            DispatchQueue.main.async {
+                                guard granted else { errorMessage = "마이크 권한이 필요합니다."; return }
+                                do { try recorder.start(to: url); recordingValidation = "녹음 중입니다..." }
+                                catch { errorMessage = "녹음 오류: \(error.localizedDescription)" }
+                            }
                         }
                     }
+                }
+            }
+            if let validation = recordingValidation { Text(validation).font(.caption).foregroundStyle(.secondary) }
+            if let output = recorder.lastOutput, !recorder.isRecording {
+                HStack {
+                    Button("검증") { validateRecording() }
+                    Button("검증 통과 파일 저장") { saveTrainingRecording(output) }
+                        .disabled(!(recordingValidation?.hasPrefix("사용 가능") ?? false))
                 }
             }
             if let output = recorder.lastOutput { Text("녹음 파일: \(output.path)").font(.caption) }
@@ -149,5 +172,49 @@ struct ContentView: View {
                 DispatchQueue.main.async { errorMessage = "Python bridge 오류: \(error.localizedDescription)" }
             }
         }
+    }
+
+    private func nextTrainingSentence() {
+        let sentences = [
+            "오늘 아침에는 평소보다 조금 일찍 일어났습니다.",
+            "창문을 열어 보니 바람이 생각보다 시원하게 불고 있습니다.",
+            "아직 결정하지 못한 부분은 조금 더 고민해 볼 생각입니다.",
+            "중요한 것은 얼마나 빨리 하느냐가 아니라 제대로 하는 것입니다.",
+            "그런데 이 방법이 가장 좋은 방법일까요?",
+            "그러면 다른 방법을 한번 찾아보는 게 어떨까요?"
+        ]
+        sentenceIndex = (sentenceIndex + 1) % sentences.count
+        trainingSentence = sentences[sentenceIndex]
+        recordingValidation = nil
+    }
+
+    private func validateRecording() {
+        guard let output = recorder.lastOutput else { recordingValidation = "녹음 파일이 없습니다."; return }
+        do {
+            let audio = try AVAudioFile(forReading: output)
+            let seconds = Double(audio.length) / audio.processingFormat.sampleRate
+            let channels = audio.processingFormat.channelCount
+            if seconds <= 0 || seconds > 30 { recordingValidation = "재녹음 필요: 길이는 0초 초과 30초 이하여야 합니다." }
+            else if channels != 1 { recordingValidation = "재녹음 검토: mono 녹음을 권장합니다. (현재 \(channels)ch)" }
+            else { recordingValidation = String(format: "사용 가능: %.2f초, %.0fHz, mono. 문장 일치 여부를 확인한 뒤 저장하세요.", seconds, audio.processingFormat.sampleRate) }
+        } catch { recordingValidation = "검증 오류: \(error.localizedDescription)" }
+    }
+
+    private func saveTrainingRecording(_ output: URL) {
+        let transcript = URL(fileURLWithPath: projectDirectory).appendingPathComponent("data/my_voice/transcripts.csv")
+        do {
+            try FileManager.default.createDirectory(at: transcript.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if !FileManager.default.fileExists(atPath: transcript.path) {
+                try "filename,text\n".write(to: transcript, atomically: true, encoding: .utf8)
+            }
+            let filename = output.lastPathComponent
+            let escaped = trainingSentence.replacingOccurrences(of: "\"", with: "\"\"")
+            let line = "\"\(filename)\",\"\(escaped)\"\n"
+            let handle = try FileHandle(forWritingTo: transcript)
+            try handle.seekToEnd()
+            handle.write(Data(line.utf8))
+            try handle.close()
+            recordingValidation = "저장 완료: \(filename)"
+        } catch { errorMessage = "학습 데이터 저장 오류: \(error.localizedDescription)" }
     }
 }
